@@ -1,1 +1,1 @@
-web: gunicorn pig3on-app.wsgi
+web: gunicorn pigeon_app.wsgi
