@@ -77,11 +77,10 @@ WSGI_APPLICATION = 'pigeon_app.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'postgres',
-        'USER': 'postgres',
-        'PASSWORD': 'admin',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'NAME': 'rdqrdzce',
+        'USER': 'rdqrdzce',
+        'PASSWORD': '6xX1HqgggzZLr9ulTCpkEoT8ua8NBGJl',
+        'HOST': 'queenie.db.elephantsql.com',
     }
 }
 
