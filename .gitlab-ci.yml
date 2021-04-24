@@ -48,7 +48,6 @@ test:
   variables:
     DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/$POSTGRES_DB"
   script:
-    - python manage.py test
     - git remote add heroku https://heroku:$HEROKU_API_KEY@git.heroku.com/pig3on-app.git
     - git push -f heroku HEAD:master -q
 
