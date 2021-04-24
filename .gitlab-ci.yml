@@ -26,8 +26,6 @@ before_script:
   # Uncomment next line if your Django app needs a JS runtime:
   # - apt-get update -q && apt-get install nodejs -yqq
   - pip install -r requirements.txt
-  - git remote add heroku https://heroku:$HEROKU_API_KEY@git.heroku.com/pig3on-app.git
-  - git push -f heroku HEAD:master -q
 
 # To get Django tests to work you may need to create a settings file using
 # the following DATABASES:
@@ -50,6 +48,8 @@ test:
     DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/$POSTGRES_DB"
   script:
     - python manage.py test
+    - git remote add heroku https://heroku:$HEROKU_API_KEY@git.heroku.com/pig3on-app.git
+    - git push -f heroku HEAD:master -q
 
 
     
