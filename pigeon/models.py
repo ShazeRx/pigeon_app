@@ -8,7 +8,7 @@ class Post(models.Model):
     isPrivate = models.BooleanField(null=False)
     created_at = models.DateTimeField(auto_now_add=True)
     author = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
-    image = models.ImageField(upload_to='images/')
+    image = models.ImageField(upload_to='images/', null=True, blank=True)
     title = models.CharField(max_length=50)
 
 
