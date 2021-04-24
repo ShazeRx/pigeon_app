@@ -78,10 +78,10 @@ WSGI_APPLICATION = 'pigeon_app.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'rdqrdzce',
-        'USER': 'rdqrdzce',
-        'PASSWORD': '6xX1HqgggzZLr9ulTCpkEoT8ua8NBGJl',
-        'HOST': 'queenie.db.elephantsql.com',
+        'NAME': 'd6se6399prpgov',
+        'USER': 'cszvigceinsqvy',
+        'PASSWORD': '3ad7cfdf49e52a9a4cb50f1a79caf4e3ed52d0afb74224255a86ec061faa0ab2',
+        'HOST': 'ec2-63-34-97-163.eu-west-1.compute.amazonaws.com',
     }
 }
 
