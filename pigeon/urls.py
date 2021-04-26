@@ -1,7 +1,8 @@
-from django.urls import path
+from django.urls import path, include
 
-from . import views
+from pigeon.views import index
 
 urlpatterns = [
-    path('', views.index, name='index'),
+    path('auth/', include('pigeon.auth.urls')),
+    path('', index)
 ]
