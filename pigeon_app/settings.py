@@ -129,7 +129,7 @@ REST_FRAMEWORK = {
         'rest_framework.parsers.JSONParser',
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework.authentication.TokenAuthentication',
-    ),
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
 }
 django_heroku.settings(locals())
