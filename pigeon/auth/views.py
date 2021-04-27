@@ -1,26 +1,38 @@
-from rest_framework.generics import CreateAPIView, RetrieveAPIView
-from pigeon.auth.serializers import UserSerializer
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
-from rest_framework import serializers, status
+from rest_framework import status
+from rest_framework.generics import CreateAPIView
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from pigeon.auth.serializers import UserSerializer
+
 
 class LoginView(APIView):
-    def post(self, request, format=None):
+    """
+    View for login
+    """
+
+    def post(self, request: Request) -> Response:
+        """
+        Enpoint for authenticate and login user
+        :param request: Pure http request
+        :return: If user is authenticated and is active then returns pair of tokens (refresh,access),
+         if not then 401 code will be returned
+        """
         username = request.data['username']
         password = request.data['password']
         user = authenticate(username=username, password=password)
         serializer = UserSerializer(user)
         if user is not None and user.is_active:
-            return Response(status=200, data=serializer.data)
+            return Response(status=200, data=serializer.get_token(user))
         return Response(status=status.HTTP_401_UNAUTHORIZED)
- 
+
 
 class RegisterView(CreateAPIView):
+    """
+    View for registering user
+    """
     model = User
     serializer_class = UserSerializer
-
-
-
