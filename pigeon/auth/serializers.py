@@ -34,7 +34,7 @@ class UserSerializer(serializers.ModelSerializer):
             password=validated_data['password']
         )
 
-    def get_token(self, user: User):
+    def get_token(self, user: User) -> dict[str, str]:
         """
         Returns new pair of tokens (refresh,access)
         :param user: Object of user for whom token has to be got
