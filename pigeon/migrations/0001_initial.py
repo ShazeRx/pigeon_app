@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('body', models.TextField()),
                 ('password', models.CharField(max_length=128)),
-                ('isPublic', models.BooleanField()),
+                ('isPrivate', models.BooleanField()),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('image', models.ImageField(upload_to='images/')),
                 ('title', models.CharField(max_length=50)),
