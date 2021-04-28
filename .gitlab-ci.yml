@@ -1,4 +1,5 @@
 test:
+  image: python:3.9.4-buster
   stage: test
   only:
     - master
