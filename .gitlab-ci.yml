@@ -1,3 +1,12 @@
+test:
+  image: python:3.9.4-buster
+  stage: test
+  only:
+    - master
+  script:
+    - pip install -r requirements.txt
+    - python manage.py test
+
 deploy:
   stage: deploy
   variables:
