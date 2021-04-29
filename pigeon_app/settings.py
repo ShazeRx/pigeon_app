@@ -23,9 +23,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-k-lsgkni!69b=!%xpl2&l9_$_$gxz^^rt3!9bd2_a3l-l+0-*l'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 
-ALLOWED_HOSTS = []
+DEBUG = os.environ.get('DEBUG') == 'True'
+
+ALLOWED_HOSTS = [os.environ.get('BASE_URL')]
 
 # Application definition
 
@@ -143,8 +144,9 @@ REST_FRAMEWORK = {
 }
 
 # Fix for heroku test dbase clean after test execution
-if '/app' in os.environ['HOME']:
+if '/app' in os.environ.get('HOME', ''):
     import django_heroku
+
     django_heroku.settings(locals())
 
 CORS_ALLOW_CREDENTIALS = True
