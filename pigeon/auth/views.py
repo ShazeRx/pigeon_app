@@ -1,6 +1,5 @@
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
-from django.http import HttpRequest
 from rest_framework import status
 from rest_framework.generics import CreateAPIView
 from rest_framework.request import Request
