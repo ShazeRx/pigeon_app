@@ -4,6 +4,7 @@ from rest_framework import status
 from rest_framework.generics import CreateAPIView
 from rest_framework.request import Request
 from rest_framework.response import Response
+from rest_framework.status import *
 from rest_framework.views import APIView
 
 from pigeon.auth.serializers import UserSerializer
@@ -35,4 +36,13 @@ class RegisterView(CreateAPIView):
     View for registering user
     """
     model = User
-    serializer_class = UserSerializer
+    serializer_class = UserSerializer()
+
+    def post(self, request):
+        try:
+            user = self.serializer_class.create(request.data)
+            if user:
+                return Response(self.serializer_class.get_token(user), status=HTTP_200_OK)
+            return Response(data={'message':'Unexpected error occurred'}, status=HTTP_500_INTERNAL_SERVER_ERROR)
+        except ValueError as e:
+            return Response(data={'message': str(e)}, status=HTTP_401_UNAUTHORIZED)
