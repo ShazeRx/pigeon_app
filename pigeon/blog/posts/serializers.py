@@ -6,7 +6,8 @@ from pigeon.models import Post
 
 
 class PostSerializer(serializers.ModelSerializer):
-    author = UserSerializer(many=False, read_only=False)
+    # TODO: implement https://github.com/beda-software/drf-writable-nested library
+    author = UserSerializer(many=False, read_only=True)
     """
     class for serializing Post model
     """
