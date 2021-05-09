@@ -48,3 +48,10 @@ class CommentViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
+
+    def partial_update(self, request, *args, **kwargs):
+        comment = Comment.objects.get(id=kwargs['pk'])
+        serializer = CommentSerializer(instance=comment, context={
+            'request': request, 'post_id': kwargs['post_pk']})
+        serializer.update(comment, request.data)
+        return Response(serializer.data)
