@@ -28,7 +28,7 @@ class CommentViewSet(viewsets.ModelViewSet):
         :return:
         """
         queryset = Comment.objects.filter(post=kwargs['post_pk'])
-        serializer = CommentSerializer(queryset, many=True)
+        serializer = CommentSerializer(queryset, many=True, context={'request': request})
         return Response(serializer.data)
 
     def create(self, request, *args, **kwargs):
