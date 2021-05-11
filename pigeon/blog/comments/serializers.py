@@ -18,9 +18,12 @@ class CommentSerializer(serializers.ModelSerializer):
         """
         Method for translating user id and post id from request to nested serializer user, post object
         """
-        if 'post_id' in self.context:
-            data['post'] = self.context['post_id']
-        """Set nested fields to primary related when data being serialized into object"""
+        # if 'post_id' in self.context:
+        #     data['post'] = self.context['post_id']
+        user_id = self.context['request'].user.id
+        post_id = self.context['post_id']
+        data.update({'user': user_id})
+        data.update({'post': post_id})
         self.fields['user'] = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
         self.fields['post'] = serializers.PrimaryKeyRelatedField(queryset=Post.objects.all())
         return super(CommentSerializer, self).to_internal_value(data)
@@ -30,8 +33,5 @@ class CommentSerializer(serializers.ModelSerializer):
         Method for returning Post JSON with nested user field without tokens
         """
         response = super().to_representation(instance)
-        response['user'] = UserSerializer(instance.user).data
-        if 'tokens' in response['user']:
-            response['user'].pop('tokens')
         response.pop("post")
         return response

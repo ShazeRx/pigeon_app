@@ -2,6 +2,7 @@ from rest_framework import viewsets
 from rest_framework.response import Response
 from pigeon.blog.comments.serializers import CommentSerializer
 from pigeon.models import Comment
+from rest_framework.permissions import IsAuthenticated
 
 
 class CommentViewSet(viewsets.ModelViewSet):
@@ -9,6 +10,7 @@ class CommentViewSet(viewsets.ModelViewSet):
     Viewset for comments
     """
     serializer_class = CommentSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         """
@@ -26,7 +28,7 @@ class CommentViewSet(viewsets.ModelViewSet):
         :return:
         """
         queryset = Comment.objects.filter(post=kwargs['post_pk'])
-        serializer = CommentSerializer(queryset, many=True)
+        serializer = CommentSerializer(queryset, many=True, context={'request': request})
         return Response(serializer.data)
 
     def create(self, request, *args, **kwargs):
@@ -41,7 +43,15 @@ class CommentViewSet(viewsets.ModelViewSet):
         :param kwargs:
         :return:
         """
-        serializer = CommentSerializer(data=request.data, context={'post_id': kwargs['post_pk']})
+        serializer = CommentSerializer(data=request.data, context={
+            'request': request, 'post_id': kwargs['post_pk']})
         serializer.is_valid(raise_exception=True)
         serializer.save()
+        return Response(serializer.data)
+
+    def partial_update(self, request, *args, **kwargs):
+        comment = Comment.objects.get(id=kwargs['pk'])
+        serializer = CommentSerializer(instance=comment, context={
+            'request': request, 'post_id': kwargs['post_pk']})
+        serializer.update(comment, request.data)
         return Response(serializer.data)

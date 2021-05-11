@@ -8,14 +8,15 @@ class UserSerializer(serializers.ModelSerializer):
     """
     Serializer for User class
     """
-    tokens = serializers.SerializerMethodField(
-        method_name='get_token')  # token is fetched dynamically from get_token method while User is being fetched
+
+    # tokens = serializers.SerializerMethodField(
+    #     method_name='get_token')  # token is fetched dynamically from get_token method while User is being fetched
 
     class Meta:
         model = User
-        fields = ['id', 'email', 'password', 'username', 'tokens']
+        fields = ['id', 'email', 'password', 'username']
         read_only_fields = ('id',)
-        extra_kwargs = {'password': {'write_only': True}, 'email': { 'required': True}}
+        extra_kwargs = {'password': {'write_only': True}, 'email': {'required': True}}
 
     def create(self, validated_data: dict) -> User:
         """
