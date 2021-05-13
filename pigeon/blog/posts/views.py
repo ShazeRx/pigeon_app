@@ -2,6 +2,7 @@ from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from pigeon.blog.posts.pagination import PostPagination
 from pigeon.blog.posts.serializers import PostSerializer, GlobalPostSerializer
 from pigeon.models import Post
 
@@ -12,9 +13,10 @@ class PostViewSet(viewsets.ModelViewSet):
     """
     permission_classes = [IsAuthenticated]
     serializer_class = PostSerializer
+    pagination_class = PostPagination
 
     def get_queryset(self):
-        return Post.objects.filter(channel_id=self.kwargs.get('channel_pk'))
+        return Post.objects.filter(channel_id=self.kwargs.get('channel_pk')).order_by('created_at')
 
     def list(self, request, *args, **kwargs):
         """
@@ -33,10 +35,16 @@ class PostViewSet(viewsets.ModelViewSet):
         serializer.save()
         return Response(serializer.data)
 
+    def get_serializer_context(self):
+        context = super(PostViewSet, self).get_serializer_context()
+        context.update({'channel_id': self.kwargs.get('channel_pk')})
+        return context
+
 
 class GlobalPostViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = GlobalPostSerializer
+    pagination_class = PostPagination
 
     def get_queryset(self):
-        return Post.objects.filter(channel_id=None)
+        return Post.objects.filter(channel_id=None).order_by('created_at')

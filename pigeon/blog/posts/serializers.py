@@ -22,7 +22,7 @@ class PostSerializer(serializers.ModelSerializer):
         Method for translating author id from request to nested serializer user object
         """
         user_id = self.context['request'].user.id
-        channel_id = None if 'channel_id' not in self.context else self.context['channel_id']
+        channel_id = self.context['channel_id']
         data.update({'author': user_id})
         data.update({'channel': channel_id})
         self.fields['channel'] = serializers.PrimaryKeyRelatedField(queryset=Channel.objects.all(), allow_null=True)
