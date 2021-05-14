@@ -6,6 +6,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.status import *
 
+from pigeon.blog.channels.pagination import ChannelPagination
 from pigeon.blog.channels.serializers import ChannelSerializer
 from pigeon.models import Channel
 
@@ -16,9 +17,10 @@ class ChannelViewSet(viewsets.ModelViewSet):
     """
     permission_classes = [IsAuthenticated]
     serializer_class = ChannelSerializer
+    pagination_class = ChannelPagination
 
     def get_queryset(self):
-        return Channel.objects.all()
+        return Channel.objects.all().order_by('id')
 
     @action(detail=True, methods=['post'])
     def authenticate(self, request, *args, **kwargs):
