@@ -2,11 +2,14 @@ from django.contrib.auth.models import User
 from rest_framework import serializers
 
 from pigeon.auth.serializers import UserSerializer
-from pigeon.models import Post, Channel
+from pigeon.blog.tags.serializers import PostTagSerializer
+from pigeon.models import Post, Channel, Tag, Comment
 
 
 class PostSerializer(serializers.ModelSerializer):
     author = UserSerializer(many=False, read_only=True)
+    tags = serializers.SerializerMethodField()
+    comments_count = serializers.SerializerMethodField()
     """
     class for serializing Post model
     """
@@ -38,9 +41,18 @@ class PostSerializer(serializers.ModelSerializer):
             detail={"message": f'User {user} not part of channel with id {instance.channel.id}'},
             code=403)
 
+    def get_tags(self, post: Post):
+        return Tag.objects.filter(id=post.id)
+
+    def get_comments_count(self, post: Post):
+        return Comment.objects.filter(post=post.id)
+
 
 class GlobalPostSerializer(serializers.ModelSerializer):
     author = UserSerializer(many=False, read_only=True)
+    tags = serializers.SerializerMethodField()
+    comments_count = serializers.SerializerMethodField()
+
     """
     class for serializing Post model
     """
@@ -50,3 +62,11 @@ class GlobalPostSerializer(serializers.ModelSerializer):
         exclude = ['channel']
         read_only_fields = ('id', 'created_at')
         write_only = ('image',)
+
+    def get_tags(self, post: Post):
+        tags = Tag.objects.filter(post=post.id)
+        serializer = PostTagSerializer(tags, many=True)
+        return serializer.data
+
+    def get_comments_count(self, post: Post):
+        return Comment.objects.filter(post=post.id).count()

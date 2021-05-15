@@ -28,7 +28,7 @@ class LoginView(APIView):
         serializer = UserSerializer(user)
         if user is not None and user.is_active:
             return Response(status=200, data=serializer.get_token(user))
-        return Response(status=status.HTTP_401_UNAUTHORIZED)
+        return Response(status=status.HTTP_403_FORBIDDEN)
 
 
 class RegisterView(CreateAPIView):
