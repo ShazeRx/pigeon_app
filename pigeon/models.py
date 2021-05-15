@@ -8,7 +8,7 @@ class Channel(models.Model):
     password = models.CharField(max_length=128, null=True, blank=True)
     isPrivate = models.BooleanField(null=False)
     channelAccess = models.ManyToManyField(User)
-    owner = models.ForeignKey(User, null=True, on_delete=models.SET_NULL,related_name='channel_owner')
+    owner = models.ForeignKey(User, null=True, on_delete=models.SET_NULL, related_name='channel_owner')
 
 
 class Post(models.Model):
@@ -23,6 +23,7 @@ class Post(models.Model):
 class Tag(models.Model):
     name = models.CharField(max_length=100, null=False)
     post = models.ManyToManyField(Post)
+    channel = models.ManyToManyField(Channel)
 
 
 class Comment(models.Model):

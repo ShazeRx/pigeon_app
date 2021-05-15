@@ -4,14 +4,17 @@ from rest_framework import serializers
 from rest_framework.generics import get_object_or_404
 from rest_framework.relations import PrimaryKeyRelatedField
 from pigeon.auth.serializers import UserSerializer
-from pigeon.models import Channel
+from pigeon.blog.tags.serializers import ChannelTagSerializer
+from pigeon.models import Channel, Tag, Post
 
 
 class ChannelSerializer(WritableNestedModelSerializer):
     channelAccess = PrimaryKeyRelatedField(many=True, write_only=True, queryset=User.objects.all(), required=False)
     has_access = serializers.SerializerMethodField()
+    tags = serializers.SerializerMethodField()
     owner = UserSerializer(many=False, read_only=True, allow_null=False)
     number_of_members = serializers.SerializerMethodField()
+    number_of_posts = serializers.SerializerMethodField()
 
     class Meta:
         model = Channel
@@ -38,8 +41,16 @@ class ChannelSerializer(WritableNestedModelSerializer):
     def get_number_of_members(self, channel: Channel) -> int:
         return channel.channelAccess.count()
 
+    def get_number_of_posts(self, channel: Channel) -> int:
+        return Post.objects.filter(channel=channel.id).count()
+
     def get_channel_by_id(self, id: int) -> Channel:
         return get_object_or_404(Channel, id=id)
+
+    def get_tags(self, channel: Channel):
+        tags = Tag.objects.filter(channel=channel.id)
+        serializer = ChannelTagSerializer(tags, many=True)
+        return serializer.data
 
     def check_password_equals(self, data: dict, obj: Channel) -> bool:
         """
