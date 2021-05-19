@@ -1,6 +1,8 @@
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.request import Request
 from rest_framework.response import Response
+from rest_framework.status import HTTP_200_OK
 
 from pigeon.blog.posts.pagination import PostPagination
 from pigeon.blog.posts.serializers import PostSerializer, GlobalPostSerializer
@@ -12,39 +14,37 @@ class PostViewSet(viewsets.ModelViewSet):
     View for posts
     """
     permission_classes = [IsAuthenticated]
-    serializer_class = PostSerializer
     pagination_class = PostPagination
 
+    def get_serializer_class(self):
+        if self.request.query_params.get("channel", ''):
+            return PostSerializer
+        return GlobalPostSerializer
+
     def get_queryset(self):
-        return Post.objects.filter(channel_id=self.kwargs.get('channel_pk')).order_by('created_at')
+        if self.get_serializer_class() == PostSerializer:
+            return Post.objects.filter(channel_id=self.request.query_params.get('channel')).order_by('created_at')
+        return Post.objects.filter(channel_id=None).order_by('created_at')
 
     def list(self, request, *args, **kwargs):
         """
         Get all posts
         """
         posts = self.get_queryset()
-        serializer = PostSerializer(posts, many=True,
-                                    context={
-                                        'request': request})  # request context need to be passed to return reversed URL of image
+        serializer = self.get_serializer(posts, many=True,
+                                         context={
+                                             'request': request})  # request context need to be passed to return reversed URL of image
         return Response(serializer.data)
 
-    def create(self, request, *args, **kwargs):
-        serializer = PostSerializer(data=request.data, context={
-            'request': request, 'channel_id': self.kwargs.get('channel_pk')})
+    def create(self, request: Request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data, context={
+            'request': request})
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
 
-    def get_serializer_context(self):
-        context = super(PostViewSet, self).get_serializer_context()
-        context.update({'channel_id': self.kwargs.get('channel_pk')})
-        return context
-
-
-class GlobalPostViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
-    serializer_class = GlobalPostSerializer
-    pagination_class = PostPagination
-
-    def get_queryset(self):
-        return Post.objects.filter(channel_id=None).order_by('created_at')
+    def destroy(self, request: Request, *args, **kwargs):
+        post = Post.objects.get(id=kwargs.get('pk'))
+        serializer = self.get_serializer(post)
+        serializer.remove()
+        return Response(status=HTTP_200_OK)

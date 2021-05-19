@@ -10,6 +10,9 @@ class Channel(models.Model):
     channelAccess = models.ManyToManyField(User)
     owner = models.ForeignKey(User, null=True, on_delete=models.SET_NULL, related_name='channel_owner')
 
+    def __str__(self):
+        return f"{self.name}"
+
 
 class Post(models.Model):
     body = models.TextField()
@@ -19,11 +22,17 @@ class Post(models.Model):
     title = models.CharField(max_length=50)
     channel = models.ForeignKey(Channel, null=True, blank=True, on_delete=models.SET_NULL)
 
+    def __str__(self):
+        return f"{self.title}, {self.author}"
+
 
 class Tag(models.Model):
     name = models.CharField(max_length=100, null=False)
-    post = models.ManyToManyField(Post)
-    channel = models.ManyToManyField(Channel)
+    post = models.ManyToManyField(Post, blank=True)
+    channel = models.ManyToManyField(Channel, blank=True)
+
+    def __str__(self):
+        return f"{self.name}"
 
 
 class Comment(models.Model):
@@ -31,3 +40,6 @@ class Comment(models.Model):
     body = models.TextField()
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+
+    def __str__(self):
+        return f"{self.body[:10]}, {self.user}"

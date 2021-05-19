@@ -1,12 +1,12 @@
 from rest_framework_nested import routers
 
-from pigeon.blog.comments.views import GlobalCommentViewSet
-from pigeon.blog.posts.views import GlobalPostViewSet
+from pigeon.blog.comments.views import  CommentViewSet
+from pigeon.blog.posts.views import PostViewSet
 
-router = routers.SimpleRouter()
-router.register(r'', GlobalPostViewSet, basename='global_posts')
+post_router = routers.SimpleRouter()
+post_router.register(r'', PostViewSet, basename='posts', )
 
-comment_router = routers.NestedSimpleRouter(router, r'', lookup='post')
-comment_router.register(r'comments', GlobalCommentViewSet, basename='post-comments')
+comment_router = routers.NestedSimpleRouter(post_router, r'', lookup='post')
+comment_router.register(r'comments', CommentViewSet, basename='post-comments')
 
-urlpatterns = router.urls + comment_router.urls
+urlpatterns = post_router.urls + comment_router.urls

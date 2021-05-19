@@ -23,7 +23,12 @@ class ChannelViewSet(viewsets.ModelViewSet):
         return Channel.objects.all().order_by('id')
 
     @action(detail=True, methods=['post'])
-    def authenticate(self, request, *args, **kwargs):
+    def authenticate(self, request, *args, **kwargs) -> Response:
+        """
+        Add user to channel, if channel isPrivate parameter is True then
+        password query parameter need to be added to request with valid password
+        :return:
+        """
         channel_pk = kwargs.get('pk', '')
         serializer = ChannelSerializer()
         channel = serializer.get_channel_by_id(channel_pk)
@@ -36,7 +41,10 @@ class ChannelViewSet(viewsets.ModelViewSet):
         return Response(data={'message': 'Unauthorized'}, status=HTTP_401_UNAUTHORIZED)
 
     @action(detail=True, methods=['post'])
-    def unauthenticate(self, request, *args, **kwargs):
+    def unauthenticate(self, request, *args, **kwargs) -> Response:
+        """
+        Remove user from channel
+        """
         channel_pk = kwargs.get('pk', '')
         serializer = ChannelSerializer()
         channel = serializer.get_channel_by_id(channel_pk)
@@ -44,7 +52,7 @@ class ChannelViewSet(viewsets.ModelViewSet):
         channel.save()
         return Response(data={'message': 'Removed'})
 
-    def retrieve(self, request: Request, *args, **kwargs):
+    def retrieve(self, request: Request, *args, **kwargs) -> Response:
         id = kwargs.get('pk')
         try:
             channel = Channel.objects.get(id=id)
@@ -55,7 +63,11 @@ class ChannelViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=HTTP_200_OK)
         return Response(data={'message': f'User {request.user} not part of channel with id {id}'})
 
-    def generate_password(self, request, *args, **kwargs):
+    @action(detail=True, methods=['get'])
+    def generate_password(self, request, *args, **kwargs) -> Response:
+        """
+        Generate random password for channel
+        """
         comment = Channel.objects.get(id=kwargs['pk'])
         comment.password = User.objects.make_random_password(16)
         comment.save()
