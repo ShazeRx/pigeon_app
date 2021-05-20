@@ -45,18 +45,11 @@ class PostSerializer(serializers.ModelSerializer):
         post = super(PostSerializer, self).create(validated_data)
         tag_list_data = self.context['request'].data['tags']
         tags = [Tag(**tag_data) for tag_data in tag_list_data]
-        existing_tags = Tag.objects.all()
-        for tag in tags:
-            existing_tag = existing_tags.filter(name=tag.name).first()
-            if not existing_tag:
-                existing_tag = tag
-                existing_tag.save()
-            existing_tag.post.add(post.id)
+        self.link_tags(post, tags)
         return post
 
     def get_tags(self, post: Post):
         tags = Tag.objects.filter(post=post.id)
-
         serializer = PostTagSerializer(tags, many=True)
         return serializer.data
 
@@ -86,8 +79,25 @@ class PostSerializer(serializers.ModelSerializer):
         if user == instance.author \
                 and user in post_channel.channelAccess.all() \
                 or user == post_channel.owner:
+            tag_list_data = self.context['request'].data['tags']
+            tags = [Tag(**tag_data) for tag_data in tag_list_data]
+            post_tags = Tag.objects.filter(post=instance.id)
+            for tag in post_tags:
+                if tag not in tags:
+                    tag = Tag.objects.get(id=tag.id)
+                    tag.post.remove(instance)
+            self.link_tags(instance, tags)
             return super(PostSerializer, self).update(instance, validated_data)
         raise serializers.ValidationError(detail=f'User {user} not part of channel with id {post_channel.id}')
+
+    def link_tags(self, post: Post, tags_to_be_added: list):
+        existing_tags = Tag.objects.filter(name__in=[tag.name for tag in tags_to_be_added])
+        for tag in tags_to_be_added:
+            existing_tag = existing_tags.filter(name=tag.name).first()
+            if not existing_tag:
+                existing_tag = tag
+                existing_tag.save()
+            existing_tag.post.add(post.id)
 
 
 class GlobalPostSerializer(PostSerializer):
@@ -118,8 +128,16 @@ class GlobalPostSerializer(PostSerializer):
             return post.delete()
         raise serializers.ValidationError(detail=f'User {user} not autor of post with id {post.id}')
 
-    def update(self, instance, validated_data):
+    def update(self, instance: Post, validated_data):
         user = self.context['request'].user
         if user == instance.author:
+            tag_list_data = self.context['request'].data['tags']
+            tags = [Tag(**tag_data) for tag_data in tag_list_data]
+            post_tags = Tag.objects.filter(post=instance.id)
+            for tag in post_tags:
+                if tag not in tags:
+                    tag = Tag.objects.get(id=tag.id)
+                    tag.post.remove(instance)
+            self.link_tags(instance, tags)
             return super(PostSerializer, self).update(instance, validated_data)
         raise serializers.ValidationError(detail=f'User {user} not autor of post with id {instance.id}')
