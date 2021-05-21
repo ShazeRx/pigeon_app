@@ -97,4 +97,30 @@ class ChannelSerializer(WritableNestedModelSerializer):
         channel.save()
         channel.channelAccess.add(user_id)
         channel.password = User.objects.make_random_password()
+        tag_list_data = self.context['request'].data['tags']
+        tags = [Tag(**tag_data) for tag_data in tag_list_data]
+        self.link_tags(channel, tags)
         return channel
+
+    def link_tags(self, channel: Channel, tags_to_be_added: list):
+        existing_tags = Tag.objects.filter(name__in=[tag.name for tag in tags_to_be_added])
+        for tag in tags_to_be_added:
+            existing_tag = existing_tags.filter(name=tag.name).first()
+            if not existing_tag:
+                existing_tag = tag
+                existing_tag.save()
+            existing_tag.channel.add(channel.id)
+
+    def update(self, instance, validated_data):
+        user = self.context['request'].user
+        if user == instance.owner:
+            tag_list_data = self.context['request'].data['tags']
+            tags = [Tag(**tag_data) for tag_data in tag_list_data]
+            channel_tags = Tag.objects.filter(channel=instance.id)
+            for tag in channel_tags:
+                if tag not in tags:
+                    tag = Tag.objects.get(id=tag.id)
+                    tag.channel.remove(instance)
+            self.link_tags(instance, tags)
+            return super(ChannelSerializer, self).update(instance, validated_data)
+        raise serializers.ValidationError(detail=f'User {user} not owner of channel with id {instance.id}')

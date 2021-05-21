@@ -68,7 +68,7 @@ class ChannelViewSet(viewsets.ModelViewSet):
         """
         Generate random password for channel
         """
-        comment = Channel.objects.get(id=kwargs['pk'])
-        comment.password = User.objects.make_random_password(16)
-        comment.save()
-        return Response(data={'password': comment.password})
+        channel = Channel.objects.get(id=kwargs['pk'])
+        channel.password = User.objects.make_random_password(16)
+        channel.save()
+        return Response(data={'password': channel.password})
