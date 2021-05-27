@@ -18,12 +18,11 @@ class Post(models.Model):
     body = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     author = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
-    image = models.ImageField(upload_to='images/', null=True, blank=True)
     title = models.CharField(max_length=50)
     channel = models.ForeignKey(Channel, null=True, blank=True, on_delete=models.SET_NULL)
 
     def __str__(self):
-        return f"{self.title}, {self.author}"
+        return f"{self.id}:{self.title}, {self.author}"
 
 
 class Tag(models.Model):
@@ -43,3 +42,8 @@ class Comment(models.Model):
 
     def __str__(self):
         return f"{self.body[:10]}, {self.user}"
+
+
+class Image(models.Model):
+    image = models.ImageField(upload_to='images/', null=False, blank=False)
+    post = models.ForeignKey(Post, on_delete=models.CASCADE,related_name="images")
