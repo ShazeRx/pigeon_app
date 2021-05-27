@@ -2,7 +2,6 @@ from django.contrib.auth.models import User
 from rest_framework import serializers
 
 from pigeon.auth.serializers import UserSerializer
-from pigeon.blog.images.serializers import ImageSerializer
 from pigeon.blog.tags.serializers import PostTagSerializer
 from pigeon.models import Post, Channel, Tag, Comment
 
@@ -11,15 +10,15 @@ class PostSerializer(serializers.ModelSerializer):
     author = UserSerializer(many=False, read_only=True)
     tags = serializers.SerializerMethodField()
     comments_count = serializers.SerializerMethodField()
-    images = ImageSerializer(many=True, read_only=True)
     """
     class for serializing Post model
     """
 
     class Meta:
         model = Post
-        fields = ["id", "body", "title", "author", "channel", "images", "created_at", "tags", "comments_count"]
+        fields = "__all__"
         read_only_fields = ('id', 'created_at')
+        write_only = ('image',)
 
     def to_internal_value(self, data):
         """
@@ -108,7 +107,7 @@ class GlobalPostSerializer(PostSerializer):
 
     class Meta:
         model = Post
-        fields = ["id", "body", "title", "author", "images", "created_at", "tags"]
+        exclude = ['channel']
 
     def to_internal_value(self, data):
         """
