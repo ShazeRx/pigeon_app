@@ -10,6 +10,6 @@ Urls for authentication
 urlpatterns = [
     path('register/', RegisterView.as_view()),
     path('login/', LoginView.as_view()),
-    path('refresh/', jwt_views.TokenRefreshView.as_view(), name='toke_refresh')
+    path('refresh/', jwt_views.TokenRefreshView.as_view(), name='toke_refresh'),
     path('email-verify/', VerifyEmailView.as_view(), name='email-verify'),
 ]

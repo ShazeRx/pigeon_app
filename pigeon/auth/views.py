@@ -1,15 +1,15 @@
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from rest_framework import status
-from rest_framework.generics import CreateAPIView, GenericAPIView
+from rest_framework.generics import GenericAPIView
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework.status import *
 from rest_framework.views import APIView
 from pigeon.auth.serializers import UserSerializer
 from .utils import MailSenderUtil
 import os
 import jwt
+
 
 class LoginView(APIView):
     """
@@ -36,13 +36,23 @@ class RegisterView(APIView):
     """
     View for registering user
     """
+    serializer_class = UserSerializer
 
+    def post(self, request):
+        user = request.data
+        serializer = self.serializer_class(data=user)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        user_data = serializer.data
+        MailSenderUtil.send_email(request=request, user_data=user_data)
+        return Response(data=user_data, status=status.HTTP_201_CREATED)
 
 
 class VerifyEmailView(GenericAPIView):
     """
     View for verifying an email
     """
+
     def get(self, request):
         token = request.GET.get('token')
         try:
