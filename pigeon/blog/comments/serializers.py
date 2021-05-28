@@ -26,37 +26,12 @@ class CommentSerializer(serializers.ModelSerializer):
         self.fields['post'] = serializers.PrimaryKeyRelatedField(queryset=Post.objects.all())
         return super(CommentSerializer, self).to_internal_value(data)
 
-    def to_representation(self, instance):
+    def to_representation(self, instance: Comment):
         """
         Method for returning Post JSON with nested user field without tokens
         """
-        response = super().to_representation(instance)
-        response.pop("post")
-        return response
-
-
-class GlobalCommentSerializer(serializers.ModelSerializer):
-    user = UserSerializer(many=False, read_only=True)
-    post = GlobalPostSerializer(many=False, read_only=True)
-
-    class Meta:
-        fields = "__all__"
-        read_only_fields = ('id', 'created_at')
-        model = Comment
-
-    def to_internal_value(self, data):
-        user_id = self.context['request'].user.id
-        post_id = self.context['post_id']
-        data.update({'user': user_id})
-        data.update({'post': post_id})
-        self.fields['user'] = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
-        self.fields['post'] = serializers.PrimaryKeyRelatedField(queryset=Post.objects.all())
-        return super(GlobalCommentSerializer, self).to_internal_value(data)
-
-    def to_representation(self, instance):
-        """
-        Method for returning Post JSON with nested user field without tokens
-        """
+        if instance.post.channel is None:
+            self.fields['post'] = GlobalPostSerializer(many=False, read_only=True)
         response = super().to_representation(instance)
         response.pop("post")
         return response
