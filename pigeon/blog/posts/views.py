@@ -31,9 +31,12 @@ class PostViewSet(viewsets.ModelViewSet):
         Get all posts
         """
         posts = self.get_queryset()
-        serializer = self.get_serializer(posts, many=True,
+        page = self.paginate_queryset(posts)
+        serializer = self.get_serializer(page, many=True,
                                          context={
-                                             'request': request})  # request context need to be passed to return reversed URL of image
+                                             'request': request})
+        if page is not None:
+            return self.get_paginated_response(serializer.data)
         return Response(serializer.data)
 
     def create(self, request: Request, *args, **kwargs):
