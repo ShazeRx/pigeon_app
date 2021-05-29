@@ -2,17 +2,15 @@ from django.contrib.auth.models import User
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.dispatch import receiver
-from django.db.models.signals import pre_save
+
 from django.contrib.auth.hashers import make_password
 
+
 class UserSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField()
     """
     Serializer for User class
     """
-
-    # tokens = serializers.SerializerMethodField(
-    #     method_name='get_token')  # token is fetched dynamically from get_token method while User is being fetched
 
     class Meta:
         model = User
@@ -20,19 +18,7 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = ('id',)
         extra_kwargs = {'password': {'write_only': True}, 'email': {'required': True}}
 
-    """
-        Dispatches a signal before saving an user object into a database.  
-        :param pre_save: Signal sent before a model gets saved.
-        :param sender=User: Specifies a particular sender to receive signals from.
-        """
-
-    @receiver(pre_save, sender=User)
-    def set_new_user_inactive(sender, instance, **kwargs):
-        if instance._state.adding is True:
-            instance.is_active = False
-            instance.password = make_password(instance.password)
-
-    def validate(self, data):
+    def validate_email(self, email: str) -> str:
         """
         Validates the registration of a new user
         :param data: dict in format
@@ -43,11 +29,11 @@ class UserSerializer(serializers.ModelSerializer):
         }
         :return: Data if valid, othwerwise raises a validation exception.
         """
-        if len(data['email']) == 0:
+        if len(email) == 0:
             raise serializers.ValidationError('Email is required.')
-        if User.objects.filter(email=data['email']):
+        if User.objects.filter(email=email):
             raise serializers.ValidationError('A user with that email already exists.')
-        return data
+        return email
 
     def create(self, validated_data: dict) -> User:
         """
@@ -63,7 +49,8 @@ class UserSerializer(serializers.ModelSerializer):
         return User.objects.create_user(
             email=validated_data['email'],
             username=validated_data['username'],
-            password=validated_data['password']
+            password=make_password(validated_data['password']),
+            is_active=False
         )
 
     def get_token(self, user: User) -> dict[str, str]:

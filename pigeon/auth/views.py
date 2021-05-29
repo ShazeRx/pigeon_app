@@ -27,15 +27,16 @@ class LoginView(APIView):
         password = request.data['password']
         user = authenticate(username=username, password=password)
         serializer = UserSerializer(user)
-        if user is not None and user.is_active:
+        if user is not None:
             return Response(status=200, data=serializer.get_token(user))
-        return Response(status=status.HTTP_403_FORBIDDEN)
+        return Response(data={"message": "User not activated or does not exist"}, status=status.HTTP_403_FORBIDDEN)
 
 
 class RegisterView(APIView):
     """
     View for registering user
     """
+    model = User
     serializer_class = UserSerializer
 
     def post(self, request):
@@ -44,6 +45,7 @@ class RegisterView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         user_data = serializer.data
+        user_data['tokens'] = serializer.get_token(User.objects.get(id=user_data['id']))
         MailSenderUtil.send_email(request=request, user_data=user_data)
         return Response(data=user_data, status=status.HTTP_201_CREATED)
 
@@ -56,10 +58,10 @@ class VerifyEmailView(GenericAPIView):
     def get(self, request):
         token = request.GET.get('token')
         try:
-            payload = jwt.decode(jwt=token, key=os.environ.get('SECRET_KEY'), algorithms='HS256')
+            payload = jwt.decode(jwt=token, key=os.environ.get('SECRET_KEY'), algorithms=['HS256'])
             user = User.objects.get(id=payload['user_id'])
             if not user.is_active:
-                user.is_active = True;
+                user.is_active = True
                 user.save()
             return Response({'email': 'Successfully activated'}, status=status.HTTP_200_OK)
         except jwt.ExpiredSignatureError:
