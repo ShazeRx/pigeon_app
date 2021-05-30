@@ -1,5 +1,10 @@
+import datetime
+import os
+import jwt
 from django.contrib.auth.models import User
 from django.test import TestCase
+from pigeon.auth.serializers import UserSerializer
+from unittest import mock
 
 
 class TestLoginView(TestCase):
@@ -131,3 +136,52 @@ class TestRegisterView(TestCase):
         response = self.client.post('/api/auth/register/', data=self.data, content_type="application/json")
         # then
         self.assertEqual(len(response.data['tokens']), 2)
+
+    def test_should_return_valid_tokens_pairs(self):
+        # when
+        response = self.client.post('/api/auth/register/', data=self.data, content_type="application/json")
+        # then
+        self.assertNotEqual(response.json()['tokens']['access'], "" and response.json()['tokens']['refresh'], "")
+
+
+class TestVerifyEmailView(TestCase):
+    def setUp(self) -> None:
+        self.data = {
+            "username": "hello",
+            "password": "world",
+            "email": "email",
+            "is_active": False
+        }
+        self.user = User.objects.create_user(**self.data)
+        self.serializer = UserSerializer()
+        self.token = self.serializer.get_token(self.user)['access']
+
+    def test_should_activate_user(self):
+        # when
+        response = self.client.get(f'/api/auth/email-verify/?token={self.token}')
+        # then
+        self.user.refresh_from_db()
+        self.assertContains(response, 'Successfully activated', status_code=200)
+        self.assertEqual(self.user.is_active, True)
+
+    @mock.patch.dict(os.environ, {"SECRET_KEY": "secret1"})
+    def test_should_throw_invalid_token_error_when_bad_sign(self):
+        # when
+        response = self.client.get(f'/api/auth/email-verify/?token={self.token}')
+        # then
+        self.user.refresh_from_db()
+        self.assertContains(response, "Invalid token", status_code=400)
+        self.assertEqual(self.user.is_active, False)
+
+    def test_should_throw_activation_expired_when_jwt_expired(self):
+        # given
+        token = self.token
+        payload = jwt.decode(jwt=token, key=os.environ.get('SECRET_KEY'), algorithms=['HS256'])
+        payload['exp'] = datetime.datetime.utcnow() - datetime.timedelta(minutes=5)
+        token = jwt.encode(payload=payload, key=os.environ.get('SECRET_KEY'), algorithm='HS256')
+        # when
+        response = self.client.get(f'/api/auth/email-verify/?token={token}')
+        # then
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.is_active, False)
+        self.assertContains(response, 'Activation Expired', status_code=400)

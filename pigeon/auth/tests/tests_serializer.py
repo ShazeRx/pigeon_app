@@ -39,3 +39,35 @@ class UserSerializerTest(TestCase):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         self.assertEqual(serializer.validated_data, user_data)
+
+    def test_validate_email_empty(self):
+        serializer = UserSerializer()
+        self.assertRaises(ValidationError, serializer.validate_email, "")
+
+    def test_validate_email_exist(self):
+        # given
+        user_data = {
+            'email': 'some@email.pl',
+            'username': 'some_username2',
+            'password': 'some_password1'
+        }
+        # when
+        serializer = UserSerializer(data=user_data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        # then
+        self.assertRaises(ValidationError, serializer.validate_email, user_data['email'])
+
+    def test_created_user_should_be_inactive(self):
+        # given
+        user_data = {
+            'email': 'some@email.pl',
+            'username': 'some_username2',
+            'password': 'some_password1'
+        }
+        # when
+        serializer = UserSerializer(data=user_data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        # then
+        self.assertEqual(serializer.instance.is_active, False)
