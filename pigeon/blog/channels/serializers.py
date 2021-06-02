@@ -3,7 +3,6 @@ from drf_writable_nested import WritableNestedModelSerializer
 from rest_framework import serializers
 from rest_framework.generics import get_object_or_404
 from rest_framework.relations import PrimaryKeyRelatedField
-from rest_framework.request import Request
 
 from pigeon.auth.serializers import UserSerializer
 from pigeon.blog.tags.serializers import ChannelTagSerializer
@@ -37,15 +36,15 @@ class ChannelSerializer(WritableNestedModelSerializer):
         self.fields['owner'] = UserSerializer(many=False, read_only=True, allow_null=False)
         return super(ChannelSerializer, self).to_representation(instance)
 
+    def get_user_from_request(self):
+        return self.context['request'].user
+
     def get_has_access(self, channel: Channel) -> bool:
         """
         Get bool if user has access to channel
         """
-        request = self.context.get('request', None)
-        if request:
-            user = request.user
-            return user in channel.channelAccess.all() or user == channel.owner
-        return False
+        user = self.get_user_from_request()
+        return user in channel.channelAccess.all() or user == channel.owner
 
     def get_number_of_members(self, channel: Channel) -> int:
         """
@@ -123,7 +122,7 @@ class ChannelSerializer(WritableNestedModelSerializer):
 
     def update(self, instance, validated_data):
         user = self.get_user_id_from_request()
-        if user == instance.owner:
+        if user == instance.owner.id:
             tag_list_data = self.context['request'].data['tags']
             tags = [Tag(**tag_data) for tag_data in tag_list_data]
             channel_tags = Tag.objects.filter(channel=instance.id)

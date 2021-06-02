@@ -1,7 +1,8 @@
 from django.contrib.auth.models import User
-from rest_framework import serializers
+from rest_framework import serializers, status
 
 from pigeon.auth.serializers import UserSerializer
+from pigeon.blog.channels.serializers import ChannelSerializer
 from pigeon.blog.images.serializers import ImageSerializer
 from pigeon.blog.tags.serializers import PostTagSerializer
 from pigeon.models import Post, Channel, Tag, Comment
@@ -33,9 +34,14 @@ class PostSerializer(serializers.ModelSerializer):
         self.fields['author'] = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
         return super(PostSerializer, self).to_internal_value(data)
 
+    def get_user_from_request(self):
+        return self.context['request'].user
+
     def to_representation(self, instance: Post):
-        user = self.context['request'].user
-        has_access = user in instance.channel.channelAccess.all()
+        user = self.get_user_from_request()
+        channel_serializer = ChannelSerializer(context={'request': self.context['request']})
+        self.fields['author'] = UserSerializer(many=False, read_only=True, allow_null=False)
+        has_access = channel_serializer.get_has_access(instance.channel)
         if has_access:
             return super(PostSerializer, self).to_representation(instance)
         raise serializers.ValidationError(
@@ -108,7 +114,7 @@ class GlobalPostSerializer(PostSerializer):
 
     class Meta:
         model = Post
-        fields = ["id", "body", "title", "author", "images", "created_at", "tags"]
+        fields = ["id", "body", "title", "author", "images", "created_at", "tags", "comments_count"]
 
     def to_internal_value(self, data):
         """
@@ -120,6 +126,7 @@ class GlobalPostSerializer(PostSerializer):
         return super(PostSerializer, self).to_internal_value(data)
 
     def to_representation(self, instance: Post):
+        self.fields['author'] = UserSerializer(many=False, read_only=True, allow_null=False)
         return super(PostSerializer, self).to_representation(instance)
 
     def remove(self):
@@ -127,7 +134,8 @@ class GlobalPostSerializer(PostSerializer):
         post = self.instance
         if user == post.author:
             return post.delete()
-        raise serializers.ValidationError(detail=f'User {user} not autor of post with id {post.id}')
+        raise serializers.ValidationError(detail=f'User {user} not autor of post with id {post.id}',
+                                          code=status.HTTP_401_UNAUTHORIZED)
 
     def update(self, instance: Post, validated_data):
         user = self.context['request'].user
@@ -141,4 +149,5 @@ class GlobalPostSerializer(PostSerializer):
                     tag.post.remove(instance)
             self.link_tags(instance, tags)
             return super(PostSerializer, self).update(instance, validated_data)
-        raise serializers.ValidationError(detail=f'User {user} not autor of post with id {instance.id}')
+        raise serializers.ValidationError(detail=f'User {user} not autor of post with id {instance.id}',
+                                          code=status.HTTP_401_UNAUTHORIZED)
