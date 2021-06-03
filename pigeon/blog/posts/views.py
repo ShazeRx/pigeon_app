@@ -1,14 +1,15 @@
 from rest_framework import viewsets
+from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework.status import HTTP_200_OK
+from rest_framework.status import *
 
 from pigeon.blog.channels.serializers import ChannelSerializer
 from pigeon.blog.posts.pagination import PostPagination
 from pigeon.blog.posts.serializers import PostSerializer, GlobalPostSerializer
-from pigeon.models import Post, Channel, Image
+from pigeon.models import Post, Channel, Image, Like
 
 
 class PostViewSet(viewsets.ModelViewSet):
@@ -64,3 +65,15 @@ class PostViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(post)
         serializer.remove()
         return Response(status=HTTP_200_OK)
+
+    @action(detail=True, methods=['post'])
+    def like(self, request, *args, **kwargs) -> Response:
+        user = self.request.user
+        post = Post.objects.get(id=kwargs.get('pk'))
+        like = Like.objects.filter(user=user, post=post).first()
+        if not like:
+            like = Like.objects.create(post=post, user=user)
+            like.save()
+            return Response(status=HTTP_200_OK)
+        like.delete()
+        return Response(status=HTTP_204_NO_CONTENT)

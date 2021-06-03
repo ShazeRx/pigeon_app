@@ -9,7 +9,7 @@ from rest_framework.test import APIClient, APIRequestFactory, APITestCase
 from pigeon.blog.images.serializers import ImageSerializer
 from pigeon.blog.posts.serializers import GlobalPostSerializer, PostSerializer
 from pigeon.blog.tags.serializers import PostTagSerializer
-from pigeon.models import Post, Image
+from pigeon.models import Post, Image, Like
 
 
 class TestPostView(APITestCase):
@@ -305,3 +305,36 @@ class TestPostView(APITestCase):
         self.assertEqual(response.status_code, 400)
         assert Post.objects.count() == 1
 
+    def test_should_add_like(self):
+        # given
+        post = baker.make('pigeon.Post')
+        # when
+        url = reverse('posts-like', args=[post.id])
+        response = self.client.post(url)
+        # then
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Like.objects.count(), 1)
+        self.assertEqual(Like.objects.get().post.id, post.id)
+        self.assertEqual(Like.objects.get().user.id, self.user.id)
+
+    def test_should_remove_like(self):
+        # given
+        post = baker.make('pigeon.Post')
+        like = baker.make('pigeon.Like', post=post, user=self.user)
+        # when
+        url = reverse('posts-like', args=[post.id])
+        response = self.client.post(url)
+        # then
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(Like.objects.count(), 0)
+
+    def test_should_return_likes_count(self):
+        # given
+        post = baker.make('pigeon.Post')
+        baker.make('pigeon.Like', post=post, user=self.user)
+        # when
+        url = reverse('posts-detail', args=[post.id])
+        response = self.client.get(url)
+        # then
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['likes_count'], 1)

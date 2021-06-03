@@ -1,6 +1,6 @@
+from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.models import User
 from django.db import models
-from django.contrib.auth.models import AbstractUser
 
 
 class Channel(models.Model):
@@ -46,4 +46,9 @@ class Comment(models.Model):
 
 class Image(models.Model):
     image = models.ImageField(upload_to='images/', null=False, blank=False)
-    post = models.ForeignKey(Post, on_delete=models.CASCADE,related_name="images")
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="images")
+
+
+class Like(models.Model):
+    user = models.ForeignKey(User, null=False, blank=False, on_delete=models.CASCADE)
+    post = models.ForeignKey(Post, null=False, blank=False, on_delete=models.CASCADE)

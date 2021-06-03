@@ -6,7 +6,7 @@ from pigeon.blog.channels.serializers import ChannelSerializer
 from pigeon.blog.images.serializers import ImageSerializer
 from pigeon.blog.posts.utils import PostSerializerUtils
 from pigeon.blog.tags.serializers import PostTagSerializer
-from pigeon.models import Post, Channel, Tag, Comment
+from pigeon.models import Post, Channel, Tag, Comment, Like
 
 
 class PostSerializer(serializers.ModelSerializer):
@@ -14,13 +14,15 @@ class PostSerializer(serializers.ModelSerializer):
     tags = serializers.SerializerMethodField()
     comments_count = serializers.SerializerMethodField()
     images = ImageSerializer(many=True, read_only=True)
+    likes_count = serializers.SerializerMethodField()
     """
     class for serializing Post model
     """
 
     class Meta:
         model = Post
-        fields = ["id", "body", "title", "author", "channel", "images", "created_at", "tags", "comments_count"]
+        fields = ["id", "body", "title", "author", "channel", "images", "created_at", "tags", "comments_count",
+                  "likes_count"]
         read_only_fields = ('id', 'created_at')
 
     def to_internal_value(self, data):
@@ -63,6 +65,9 @@ class PostSerializer(serializers.ModelSerializer):
 
     def get_comments_count(self, post: Post):
         return Comment.objects.filter(post=post.id).count()
+
+    def get_likes_count(self, post: Post):
+        return Like.objects.filter(post=post.id).count()
 
     def validate(self, attrs):
         author = attrs['author']
@@ -117,7 +122,7 @@ class GlobalPostSerializer(PostSerializer):
 
     class Meta:
         model = Post
-        fields = ["id", "body", "title", "author", "images", "created_at", "tags", "comments_count"]
+        fields = ["id", "body", "title", "author", "images", "created_at", "tags", "comments_count", "likes_count"]
 
     def to_internal_value(self, data):
         """
