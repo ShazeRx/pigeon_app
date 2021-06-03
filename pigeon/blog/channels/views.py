@@ -61,10 +61,11 @@ class ChannelViewSet(viewsets.ModelViewSet):
         serializer = ChannelSerializer(channel, context={'request': request})
         if serializer.get_has_access(channel):
             return Response(serializer.data, status=HTTP_200_OK)
-        return Response(data={'message': f'User {request.user} not part of channel with id {id}'})
+        return Response(data={'message': f'User {request.user} not part of channel with id {id}'},
+                        status=HTTP_401_UNAUTHORIZED)
 
     @action(detail=True, methods=['get'])
-    def generate_password(self, request, *args, **kwargs) -> Response:
+    def password(self, request, *args, **kwargs) -> Response:
         """
         Generate random password for channel
         """

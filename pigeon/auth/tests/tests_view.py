@@ -1,13 +1,20 @@
 import datetime
 import os
+from unittest import mock
+
 import jwt
 from django.contrib.auth.models import User
 from django.test import TestCase
+from rest_framework.reverse import reverse
+
 from pigeon.auth.serializers import UserSerializer
-from unittest import mock
 
 
 class TestLoginView(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.login_url = reverse('login')
+
     def setUp(self) -> None:
         self.data = {
             "username": "hello",
@@ -23,7 +30,7 @@ class TestLoginView(TestCase):
             "password": self.data["password"]
         }
         # when
-        response = self.client.post("/api/auth/login/", data=body, content_type="application/json")
+        response = self.client.post(self.login_url, data=body, content_type="application/json")
         # then
         self.assertEqual(response.status_code, 200)
 
@@ -34,7 +41,7 @@ class TestLoginView(TestCase):
             "password": "body"
         }
         # when
-        response = self.client.post("/api/auth/login/", data=body, content_type="application/json")
+        response = self.client.post(self.login_url, data=body, content_type="application/json")
         # then
         self.assertEqual(response.status_code, 403)
 
@@ -45,12 +52,16 @@ class TestLoginView(TestCase):
             "password": ""
         }
         # when
-        response = self.client.post("/api/auth/login/", data=body, content_type="application/json")
+        response = self.client.post(self.login_url, data=body, content_type="application/json")
         # then
         self.assertEqual(response.status_code, 403)
 
 
 class TestRegisterView(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.register_url = reverse('register')
+
     def setUp(self) -> None:
         self.data = {
             "username": "hello",
@@ -60,7 +71,7 @@ class TestRegisterView(TestCase):
 
     def test_should_register_successfully(self):
         # when
-        response = self.client.post('/api/auth/register/', data=self.data, content_type="application/json")
+        response = self.client.post(self.register_url, data=self.data, content_type="application/json")
         # then
         self.assertEqual(response.status_code, 201)
 
@@ -72,7 +83,7 @@ class TestRegisterView(TestCase):
             "email": "email@email.com"
         }
         # when
-        response = self.client.post('/api/auth/register/', data=data, content_type="application/json")
+        response = self.client.post(self.register_url, data=data, content_type="application/json")
         # then
         self.assertEqual(response.status_code, 400)
 
@@ -84,7 +95,7 @@ class TestRegisterView(TestCase):
             "email": "email@email.com"
         }
         # when
-        response = self.client.post('/api/auth/register/', data=data, content_type="application/json")
+        response = self.client.post(self.register_url, data=data, content_type="application/json")
         # then
         self.assertEqual(response.status_code, 400)
 
@@ -96,7 +107,7 @@ class TestRegisterView(TestCase):
             "email": "emailemail.com"
         }
         # when
-        response = self.client.post('/api/auth/register/', data=data, content_type="application/json")
+        response = self.client.post(self.register_url, data=data, content_type="application/json")
         # then
         self.assertEqual(response.status_code, 400)
 
@@ -108,7 +119,7 @@ class TestRegisterView(TestCase):
             "email": ""
         }
         # when
-        response = self.client.post('/api/auth/register/', data=data, content_type="application/json")
+        response = self.client.post(self.register_url, data=data, content_type="application/json")
         # then
         self.assertEqual(response.status_code, 400)
 
@@ -125,26 +136,30 @@ class TestRegisterView(TestCase):
             "email": "email@email.com"
         }
         # when
-        self.client.post('/api/auth/register/', data=user1_data, content_type="application/json")
+        self.client.post(self.register_url, data=user1_data, content_type="application/json")
         # and
-        response = self.client.post('/api/auth/register/', data=user2_data, content_type="application/json")
+        response = self.client.post(self.register_url, data=user2_data, content_type="application/json")
         # then
         self.assertEqual(response.status_code, 400)
 
     def test_should_return_token_set(self):
         # when
-        response = self.client.post('/api/auth/register/', data=self.data, content_type="application/json")
+        response = self.client.post(self.register_url, data=self.data, content_type="application/json")
         # then
         self.assertEqual(len(response.data['tokens']), 2)
 
     def test_should_return_valid_tokens_pairs(self):
         # when
-        response = self.client.post('/api/auth/register/', data=self.data, content_type="application/json")
+        response = self.client.post(self.register_url, data=self.data, content_type="application/json")
         # then
         self.assertNotEqual(response.json()['tokens']['access'], "" and response.json()['tokens']['refresh'], "")
 
 
 class TestVerifyEmailView(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.email_verify_url = reverse('email-verify')
+
     def setUp(self) -> None:
         self.data = {
             "username": "hello",
@@ -158,7 +173,7 @@ class TestVerifyEmailView(TestCase):
 
     def test_should_activate_user(self):
         # when
-        response = self.client.get(f'/api/auth/email-verify/?token={self.token}')
+        response = self.client.get(f'{self.email_verify_url}?token={self.token}')
         # then
         self.user.refresh_from_db()
         self.assertContains(response, 'Successfully activated', status_code=200)
@@ -167,7 +182,7 @@ class TestVerifyEmailView(TestCase):
     @mock.patch.dict(os.environ, {"SECRET_KEY": "secret1"})
     def test_should_throw_invalid_token_error_when_bad_sign(self):
         # when
-        response = self.client.get(f'/api/auth/email-verify/?token={self.token}')
+        response = self.client.get(f'{self.email_verify_url}?token={self.token}')
         # then
         self.user.refresh_from_db()
         self.assertContains(response, "Invalid token", status_code=400)
@@ -180,7 +195,7 @@ class TestVerifyEmailView(TestCase):
         payload['exp'] = datetime.datetime.utcnow() - datetime.timedelta(minutes=5)
         token = jwt.encode(payload=payload, key=os.environ.get('SECRET_KEY'), algorithm='HS256')
         # when
-        response = self.client.get(f'/api/auth/email-verify/?token={token}')
+        response = self.client.get(f'{self.email_verify_url}?token={token}')
         # then
         self.user.refresh_from_db()
         self.assertEqual(self.user.is_active, False)

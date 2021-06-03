@@ -4,6 +4,7 @@ from rest_framework import serializers, status
 from pigeon.auth.serializers import UserSerializer
 from pigeon.blog.channels.serializers import ChannelSerializer
 from pigeon.blog.images.serializers import ImageSerializer
+from pigeon.blog.posts.utils import PostSerializerUtils
 from pigeon.blog.tags.serializers import PostTagSerializer
 from pigeon.models import Post, Channel, Tag, Comment
 
@@ -66,7 +67,8 @@ class PostSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         author = attrs['author']
         channel = attrs.get('channel')
-        if channel is not None and author not in channel.channelAccess.all():
+        request_user = self.get_user_from_request()
+        if channel is not None and author not in channel.channelAccess.all() and request_user != channel.owner:
             raise serializers.ValidationError(detail=f'User {author} not part of channel with id {channel.id}')
         return attrs
 
@@ -121,9 +123,9 @@ class GlobalPostSerializer(PostSerializer):
         Method for translating author id from request to nested serializer user object
         """
         user_id = self.context['request'].user.id
-        data.update({'author': user_id})
+        modified_data = PostSerializerUtils.add_values_to_dict(data, author=user_id)
         self.fields['author'] = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
-        return super(PostSerializer, self).to_internal_value(data)
+        return super(PostSerializer, self).to_internal_value(modified_data)
 
     def to_representation(self, instance: Post):
         self.fields['author'] = UserSerializer(many=False, read_only=True, allow_null=False)

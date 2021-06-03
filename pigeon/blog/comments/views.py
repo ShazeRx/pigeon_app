@@ -1,5 +1,7 @@
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.status import HTTP_200_OK
 
 from pigeon.blog.comments.pagination import CommentPagination
 from pigeon.blog.comments.serializers import CommentSerializer
@@ -14,7 +16,6 @@ class CommentViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     pagination_class = CommentPagination
 
-
     def get_queryset(self):
         """
         Get queryset of comments
@@ -27,3 +28,8 @@ class CommentViewSet(viewsets.ModelViewSet):
         context.update({'post_id': self.kwargs['post_pk']})
         return context
 
+    def destroy(self, request, *args, **kwargs):
+        comment = Comment.objects.get(id=kwargs.get('pk'))
+        serializer = self.get_serializer(comment)
+        serializer.remove()
+        return Response(status=HTTP_200_OK)

@@ -1,5 +1,7 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
+
 from pigeon.auth.serializers import UserSerializer
 from pigeon.blog.posts.serializers import PostSerializer, GlobalPostSerializer
 from pigeon.models import Comment, Post
@@ -35,3 +37,17 @@ class CommentSerializer(serializers.ModelSerializer):
         response = super().to_representation(instance)
         response.pop("post")
         return response
+
+    def remove(self):
+        user = self.context['request'].user
+        comment = self.instance
+        if user == comment.user:
+            return comment.delete()
+        raise ValidationError(detail={'message': f'User {user} not author of comment'})
+
+    def update(self, instance, validated_data):
+        user = self.context['request'].user
+        comment = self.instance
+        if user == comment.user:
+            return super(CommentSerializer, self).update(instance, validated_data)
+        raise ValidationError(detail={'message': f'User {user} not author of comment'})
