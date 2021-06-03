@@ -101,14 +101,16 @@ class ChannelSerializer(WritableNestedModelSerializer):
 
     def update(self, instance, validated_data):
         user = self.get_user_id_from_request()
-        if user == instance.owner.id:
-            tag_list_data = self.context['request'].data['tags']
-            tags = [Tag(**tag_data) for tag_data in tag_list_data]
-            channel_tags = Tag.objects.filter(channel=instance.id)
-            for tag in channel_tags:
-                if tag not in tags:
-                    tag = Tag.objects.get(id=tag.id)
-                    tag.channel.remove(instance)
-            self.link_tags(instance, tags)
-            return super(ChannelSerializer, self).update(instance, validated_data)
-        raise serializers.ValidationError(detail=f'User {user} not owner of channel with id {instance.id}')
+        if instance.owner is not None:
+            if user == instance.owner.id:
+                tag_list_data = self.context['request'].data['tags']
+                tags = [Tag(**tag_data) for tag_data in tag_list_data]
+                channel_tags = Tag.objects.filter(channel=instance.id)
+                for tag in channel_tags:
+                    if tag not in tags:
+                        tag = Tag.objects.get(id=tag.id)
+                        tag.channel.remove(instance)
+                self.link_tags(instance, tags)
+                return super(ChannelSerializer, self).update(instance, validated_data)
+            raise serializers.ValidationError(detail=f'User {user} not owner of channel with id {instance.id}')
+        raise serializers.ValidationError(detail=f"Channel with id {instance.id} has no owner, contact with admin")

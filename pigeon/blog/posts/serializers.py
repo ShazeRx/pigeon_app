@@ -100,6 +100,7 @@ class PostSerializer(serializers.ModelSerializer):
         raise serializers.ValidationError(detail=f'User {user} not part of channel with id {post_channel.id}')
 
     def link_tags(self, post: Post, tags_to_be_added: list):
+        # get all tags which have same names as in request
         existing_tags = Tag.objects.filter(name__in=[tag.name for tag in tags_to_be_added])
         for tag in tags_to_be_added:
             existing_tag = existing_tags.filter(name=tag.name).first()
@@ -143,13 +144,13 @@ class GlobalPostSerializer(PostSerializer):
         user = self.context['request'].user
         if user == instance.author:
             tag_list_data = self.context['request'].data['tags']
-            tags = [Tag(**tag_data) for tag_data in tag_list_data]
+            request_tags = [Tag(**tag_data) for tag_data in tag_list_data]
             post_tags = Tag.objects.filter(post=instance.id)
             for tag in post_tags:
-                if tag not in tags:
+                if tag not in request_tags:
                     tag = Tag.objects.get(id=tag.id)
                     tag.post.remove(instance)
-            self.link_tags(instance, tags)
+            self.link_tags(instance, request_tags)
             return super(PostSerializer, self).update(instance, validated_data)
         raise serializers.ValidationError(detail=f'User {user} not autor of post with id {instance.id}',
                                           code=status.HTTP_401_UNAUTHORIZED)

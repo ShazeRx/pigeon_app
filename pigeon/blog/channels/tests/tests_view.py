@@ -1,13 +1,19 @@
+import json
 from unittest import mock
 
 from django.contrib.auth.models import User
+from django.forms import model_to_dict
 from django.test import TestCase
 from model_bakery import baker
 from rest_framework.reverse import reverse
 from rest_framework.test import APIClient, APIRequestFactory
 
 from pigeon.blog.channels.serializers import ChannelSerializer
-from pigeon.models import Channel
+from pigeon.models import Channel, Tag
+
+
+def dict_to_json(model_dict: dict):
+    return json.dumps(model_dict)
 
 
 class TestChannelView(TestCase):
@@ -190,3 +196,69 @@ class TestChannelView(TestCase):
         response = self.client.get(url)
         # then
         self.assertEqual(response.status_code, 401)
+
+    def test_should_400_when_not_owner_of_channel_and_trying_to_update(self):
+        # given
+        channel = baker.make('pigeon.Channel', channelAccess=[self.user])
+        new_channel_data = baker.prepare('pigeon.Channel')
+        new_channel_dict = model_to_dict(new_channel_data)
+        request_json = dict_to_json(new_channel_dict)
+        url = reverse('channels-detail', args=[channel.id, ])
+        # when
+        response = self.client.patch(url, data=request_json, content_type='application/json')
+        # then
+        self.assertEqual(response.status_code, 400)
+
+    def test_should_remove_tags_when_tags_are_empty_on_update(self):
+        # given
+        channel = baker.make('pigeon.Channel', owner=self.user)
+        baker.make('pigeon.Tag', _quantity=2, channel=[channel])
+        url = reverse('channels-detail', args=[channel.id, ])
+        new_channel_data = baker.prepare('pigeon.Channel')
+        new_channel_dict = model_to_dict(new_channel_data)
+        new_channel_dict['tags'] = []
+        request_json = dict_to_json(new_channel_dict)
+        # when
+        response = self.client.patch(url, data=request_json, content_type="application/json")
+        # then
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data['tags']), 0)
+        self.assertEqual(Tag.objects.filter(channel=channel.id).count(), 0)
+
+    def test_should_link_existing_tag(self):
+        # given
+        channel_without_tag = baker.prepare('pigeon.Channel', owner=self.user)
+        channel_with_tag = model_to_dict(channel_without_tag)
+        channel_without_tag.save()
+        tag = baker.make('pigeon.Tag')
+        channel_with_tag['tags'] = [{"name": tag.name}]
+        request_json = dict_to_json(channel_with_tag)
+        url = reverse('channels-detail', args=[channel_without_tag.id, ])
+        # when
+        response = self.client.patch(url, data=request_json, content_type="application/json")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Tag.objects.filter(channel=channel_without_tag.id).count(), 1)
+        self.assertEqual(Tag.objects.get(), tag)
+
+    def test_should_throw_400_when_trying_to_update_and_owner_is_None(self):
+        channel = baker.make('pigeon.Channel', channelAccess=[self.user, ])
+        new_channel_data = baker.prepare('pigeon.Channel')
+        new_channel_dict = model_to_dict(new_channel_data)
+        request_json = dict_to_json(new_channel_dict)
+        # when
+        url = reverse('channels-detail', args=[channel.id])
+        response = self.client.patch(f'{url}?channel={channel.id}', data=request_json, content_type='application/json')
+        # then
+        self.assertEqual(response.status_code, 400)
+
+    def test_should_throw_400_when_trying_to_update_and_not_owner(self):
+        user = baker.make('User')
+        channel = baker.make('pigeon.Channel', channelAccess=[self.user, ], owner=user)
+        new_channel_data = baker.prepare('pigeon.Channel')
+        new_channel_dict = model_to_dict(new_channel_data)
+        request_json = dict_to_json(new_channel_dict)
+        # when
+        url = reverse('channels-detail', args=[channel.id])
+        response = self.client.patch(f'{url}?channel={channel.id}', data=request_json, content_type='application/json')
+        # then
+        self.assertEqual(response.status_code, 400)

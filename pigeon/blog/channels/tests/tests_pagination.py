@@ -19,7 +19,7 @@ class ChannelPaginationTest(TestCase):
             'password': 'some_password'
         }
         cls.user = User.objects.create_user(**cls.user_data)
-        cls.channels_url=reverse('channels-list')
+        cls.channels_url = reverse('channels-list')
 
     def setUp(self) -> None:
         self.client = APIClient()
