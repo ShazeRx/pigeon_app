@@ -20,12 +20,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-k-lsgkni!69b=!%xpl2&l9_$_$gxz^^rt3!9bd2_a3l-l+0-*l'
+SECRET_KEY = os.environ.get('SECRET_KEY','secret')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 
-ALLOWED_HOSTS = []
+DEBUG = os.environ.get('DEBUG') == 'True'
+
+ALLOWED_HOSTS = [os.environ.get('BASE_URL')]
 
 # Application definition
 
@@ -40,7 +41,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders',
-]
+    'django_extensions']
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -136,15 +137,19 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 REST_FRAMEWORK = {
     'DEFAULT_PARSER_CLASSES': [
         'rest_framework.parsers.JSONParser',
+        'rest_framework.parsers.FormParser',
+        'rest_framework.parsers.MultiPartParser'
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
+    ),
+    'TEST_REQUEST_DEFAULT_FORMAT': 'json'
 }
 
 # Fix for heroku test dbase clean after test execution
-if '/app' in os.environ['HOME']:
+if '/app' in os.environ.get('HOME', ''):
     import django_heroku
+
     django_heroku.settings(locals())
 
 CORS_ALLOW_CREDENTIALS = True
@@ -154,3 +159,9 @@ CORS_ORIGIN_WHITELIST = [
 CORS_ORIGIN_REGEX_WHITELIST = [
     'http://localhost:4200',
 ]
+
+EMAIL_USE_TLS = True
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
