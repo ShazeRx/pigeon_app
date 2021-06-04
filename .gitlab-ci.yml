@@ -1,6 +1,8 @@
 test:
   image: python:3.9.4-buster
   stage: test
+  variables:
+    SECRET_KEY: "secret"
   only:
     - master
   script:
