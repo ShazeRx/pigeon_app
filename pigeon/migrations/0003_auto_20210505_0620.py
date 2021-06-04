@@ -27,7 +27,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='post',
             name='channel',
-            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.CASCADE, to='pigeon.channel'),
+            field=models.ForeignKey(default=None, on_delete=django.db.models.deletion.CASCADE, to='pigeon.channel'),
             preserve_default=False,
         ),
     ]
