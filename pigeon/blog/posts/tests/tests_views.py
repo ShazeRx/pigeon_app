@@ -1,5 +1,6 @@
 import tempfile
 from unittest import mock
+from unittest.mock import patch
 
 from django.contrib.auth.models import User
 from model_bakery import baker
@@ -123,10 +124,12 @@ class TestPostView(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['author']['id'], self.user.id)
 
-    def test_should_return_valid_image_url(self):
+    @patch('django.db.models.fields.files.FieldFile.url')
+    def test_should_return_valid_image_url(self, mock_url):
         # given
         post = baker.make('pigeon.Post')
         image_name = tempfile.NamedTemporaryFile(suffix=".jpg").name
+        mock_url.return_value = image_name
         image = baker.make('pigeon.Image', post=post, image=image_name)
         image_serializer_data = ImageSerializer(image).data
         # when
