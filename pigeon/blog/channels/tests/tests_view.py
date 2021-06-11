@@ -21,7 +21,7 @@ class TestChannelView(TestCase):
     def setUpTestData(cls):
         cls.public_channel_data = {
             "name": "test_channel",
-            "isPrivate": "False"
+            "is_private": "False"
         }
         cls.user_data = {
             'email': 'some_email',
@@ -111,7 +111,7 @@ class TestChannelView(TestCase):
         response = self.client.post(self.channels_url, data=self.public_channel_data)
         # then
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(Channel.objects.get().channelAccess.get().id, 1)
+        self.assertEqual(Channel.objects.get().channel_access.get().id, 1)
 
     def test_should_add_user_to_channel_to_global_channel(self):
         # given
@@ -122,42 +122,42 @@ class TestChannelView(TestCase):
         channel.refresh_from_db()
         # then
         self.assertContains(response, 'Authenticated', status_code=200)
-        self.assertEqual(channel.channelAccess.get(), self.user)
+        self.assertEqual(channel.channel_access.get(), self.user)
 
     def test_should_add_user_to_channel_to_private_channel_with_valid_password(self):
         # given
         password = "123"
-        channel = baker.make('pigeon.Channel', password=password, isPrivate=False)
+        channel = baker.make('pigeon.Channel', password=password, is_private=False)
         # when
         url = reverse('channels-authenticate', args=[channel.id, ])
         response = self.client.post(url, data={"password": password})
         channel.refresh_from_db()
         # then
         self.assertContains(response, 'Authenticated', status_code=200)
-        self.assertEqual(channel.channelAccess.get(), self.user)
+        self.assertEqual(channel.channel_access.get(), self.user)
 
     def test_should_throw_401_when_adding_to_private_channel_with_wrong_password(self):
         # given
         password = "123"
-        channel = baker.make('pigeon.Channel', password=password, isPrivate=True)
+        channel = baker.make('pigeon.Channel', password=password, is_private=True)
         # when
         url = reverse('channels-authenticate', args=[channel.id, ])
         response = self.client.post(url, data={"password": 12})
         channel.refresh_from_db()
         # then
         self.assertContains(response, 'Unauthorized', status_code=401)
-        self.assertEqual(channel.channelAccess.count(), 0)
+        self.assertEqual(channel.channel_access.count(), 0)
 
     def test_should_remove_from_channel(self):
         # given
-        channel = baker.make('pigeon.Channel', channelAccess=[self.user, ])
+        channel = baker.make('pigeon.Channel', channel_access=[self.user, ])
         # when
         url = reverse('channels-unauthenticate', args=[channel.id, ])
         response = self.client.post(url)
         channel.refresh_from_db()
         # then
         self.assertContains(response, 'Removed', status_code=200)
-        self.assertEqual(channel.channelAccess.count(), 0)
+        self.assertEqual(channel.channel_access.count(), 0)
 
     def test_should_generate_new_password_for_channel(self):
         # given
@@ -199,7 +199,7 @@ class TestChannelView(TestCase):
 
     def test_should_400_when_not_owner_of_channel_and_trying_to_update(self):
         # given
-        channel = baker.make('pigeon.Channel', channelAccess=[self.user])
+        channel = baker.make('pigeon.Channel', channel_access=[self.user])
         new_channel_data = baker.prepare('pigeon.Channel')
         new_channel_dict = model_to_dict(new_channel_data)
         request_json = dict_to_json(new_channel_dict)
@@ -241,7 +241,7 @@ class TestChannelView(TestCase):
         self.assertEqual(Tag.objects.get(), tag)
 
     def test_should_throw_400_when_trying_to_update_and_owner_is_None(self):
-        channel = baker.make('pigeon.Channel', channelAccess=[self.user, ])
+        channel = baker.make('pigeon.Channel', channel_access=[self.user, ])
         new_channel_data = baker.prepare('pigeon.Channel')
         new_channel_dict = model_to_dict(new_channel_data)
         request_json = dict_to_json(new_channel_dict)
@@ -253,7 +253,7 @@ class TestChannelView(TestCase):
 
     def test_should_throw_400_when_trying_to_update_and_not_owner(self):
         user = baker.make('User')
-        channel = baker.make('pigeon.Channel', channelAccess=[self.user, ], owner=user)
+        channel = baker.make('pigeon.Channel', channel_access=[self.user, ], owner=user)
         new_channel_data = baker.prepare('pigeon.Channel')
         new_channel_dict = model_to_dict(new_channel_data)
         request_json = dict_to_json(new_channel_dict)

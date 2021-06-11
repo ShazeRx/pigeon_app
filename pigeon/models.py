@@ -6,8 +6,8 @@ from django.db import models
 class Channel(models.Model):
     name = models.CharField(max_length=100, null=False, blank=False)
     password = models.CharField(max_length=128, null=True, blank=True)
-    isPrivate = models.BooleanField(null=False)
-    channelAccess = models.ManyToManyField(User)
+    is_private = models.BooleanField(null=False)
+    channel_access = models.ManyToManyField(User)
     owner = models.ForeignKey(User, null=True, on_delete=models.SET_NULL, related_name='channel_owner')
 
     def __str__(self):

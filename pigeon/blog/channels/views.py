@@ -34,8 +34,8 @@ class ChannelViewSet(viewsets.ModelViewSet):
         channel = serializer.get_channel_by_id(channel_pk)
         password = request.query_params.get('password', '')
         is_valid_password = channel.password is None if password == '' else password
-        if is_valid_password or not channel.isPrivate:
-            channel.channelAccess.add(request.user)
+        if is_valid_password or not channel.is_private:
+            channel.channel_access.add(request.user)
             channel.save()
             return Response(data={'message': 'Authenticated'})
         return Response(data={'message': 'Unauthorized'}, status=HTTP_401_UNAUTHORIZED)
@@ -48,7 +48,7 @@ class ChannelViewSet(viewsets.ModelViewSet):
         channel_pk = kwargs.get('pk', '')
         serializer = ChannelSerializer()
         channel = serializer.get_channel_by_id(channel_pk)
-        channel.channelAccess.remove(request.user)
+        channel.channel_access.remove(request.user)
         channel.save()
         return Response(data={'message': 'Removed'})
 

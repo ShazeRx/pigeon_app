@@ -156,7 +156,7 @@ class TestPostView(APITestCase):
 
     def test_should_throw_401_when_trying_to_update_private_post_by_not_author(self):
         # given
-        channel = baker.make('pigeon.Channel', channelAccess=[self.user, ])
+        channel = baker.make('pigeon.Channel', channel_access=[self.user, ])
         post = baker.make('pigeon.Post', channel=channel)
         new_post_data = baker.prepare('pigeon.Post')
         mock_request = self.factory.patch(f'/')
@@ -185,7 +185,7 @@ class TestPostView(APITestCase):
 
     def test_should_remove_post_from_channel(self):
         # given
-        channel = baker.make('pigeon.Channel', channelAccess=[self.user, ])
+        channel = baker.make('pigeon.Channel', channel_access=[self.user, ])
         post = baker.make('pigeon.Post', author=self.user, channel=channel)
         # when
         url = reverse('posts-detail', args=[post.id])
@@ -207,7 +207,7 @@ class TestPostView(APITestCase):
 
     def test_should_remove_post_from_channel_by_post_author(self):
         # given
-        channel = baker.make('pigeon.Channel', channelAccess=[self.user, ])
+        channel = baker.make('pigeon.Channel', channel_access=[self.user, ])
         post = baker.make('pigeon.Post', channel=channel, author=self.user)
         # when
         url = reverse('posts-detail', args=[post.id])
@@ -229,7 +229,7 @@ class TestPostView(APITestCase):
 
     def test_should_throw_400_when_trying_to_delete_and_not_author(self):
         # given
-        channel = baker.make('pigeon.Channel', channelAccess=[self.user, ])
+        channel = baker.make('pigeon.Channel', channel_access=[self.user, ])
         post = baker.make('pigeon.Post', channel=channel)
         # when
         url = reverse('posts-detail', args=[post.id])
@@ -240,7 +240,7 @@ class TestPostView(APITestCase):
 
     def test_should_update_post_from_channel(self):
         # given
-        channel = baker.make('pigeon.Channel', channelAccess=[self.user, ])
+        channel = baker.make('pigeon.Channel', channel_access=[self.user, ])
         post = baker.make('pigeon.Post', author=self.user, channel=channel)
         new_post_data = baker.prepare('pigeon.Post')
         mock_request = self.factory.patch(f'/')
@@ -276,7 +276,7 @@ class TestPostView(APITestCase):
 
     def test_should_update_post_from_channel_by_post_author(self):
         # given
-        channel = baker.make('pigeon.Channel', channelAccess=[self.user, ])
+        channel = baker.make('pigeon.Channel', channel_access=[self.user, ])
         post = baker.make('pigeon.Post', channel=channel, author=self.user)
         new_post_data = baker.prepare('pigeon.Post')
         mock_request = self.factory.patch(f'/')
