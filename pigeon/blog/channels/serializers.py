@@ -10,7 +10,7 @@ from pigeon.models import Channel, Tag, Post
 
 
 class ChannelSerializer(WritableNestedModelSerializer):
-    channelAccess = PrimaryKeyRelatedField(many=True, write_only=True, queryset=User.objects.all(), required=False)
+    channel_access = PrimaryKeyRelatedField(many=True, write_only=True, queryset=User.objects.all(), required=False)
     has_access = serializers.SerializerMethodField()
     tags = serializers.SerializerMethodField()
     owner = UserSerializer(many=False, read_only=True, allow_null=False)
@@ -44,13 +44,13 @@ class ChannelSerializer(WritableNestedModelSerializer):
         Get bool if user has access to channel
         """
         user = self.get_user_from_request()
-        return user in channel.channelAccess.all() or user == channel.owner
+        return user in channel.channel_access.all() or user == channel.owner
 
     def get_number_of_members(self, channel: Channel) -> int:
         """
         Get number of members in channel
         """
-        return channel.channelAccess.count()
+        return channel.channel_access.count()
 
     def get_number_of_posts(self, channel: Channel) -> int:
         """
@@ -82,7 +82,7 @@ class ChannelSerializer(WritableNestedModelSerializer):
         user_id = self.get_user_id_from_request()
         channel = Channel(**validated_data)
         channel.save()
-        channel.channelAccess.add(user_id)
+        channel.channel_access.add(user_id)
         channel.password = User.objects.make_random_password()
         if 'tags' in self.context['request'].data:
             tag_list_data = self.context['request'].data['tags']

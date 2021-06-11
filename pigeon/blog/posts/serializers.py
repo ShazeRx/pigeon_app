@@ -73,7 +73,7 @@ class PostSerializer(serializers.ModelSerializer):
         author = attrs['author']
         channel = attrs.get('channel')
         request_user = self.get_user_from_request()
-        if channel is not None and author not in channel.channelAccess.all() and request_user != channel.owner:
+        if channel is not None and author not in channel.channel_access.all() and request_user != channel.owner:
             raise serializers.ValidationError(detail=f'User {author} not part of channel with id {channel.id}')
         return attrs
 
@@ -82,7 +82,7 @@ class PostSerializer(serializers.ModelSerializer):
         post = self.instance
         post_channel = post.channel
         if user == post.author \
-                and user in post_channel.channelAccess.all() \
+                and user in post_channel.channel_access.all() \
                 or user == post_channel.owner:
             return post.delete()
         raise serializers.ValidationError(detail=f'User {user} not part of channel with id {post_channel.id}')
@@ -91,7 +91,7 @@ class PostSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         post_channel = instance.channel
         if user == instance.author \
-                and user in post_channel.channelAccess.all() \
+                and user in post_channel.channel_access.all() \
                 or user == post_channel.owner:
             tag_list_data = self.context['request'].data['tags']
             tags = [Tag(**tag_data) for tag_data in tag_list_data]
