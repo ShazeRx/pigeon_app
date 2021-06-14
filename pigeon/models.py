@@ -46,7 +46,17 @@ class Comment(models.Model):
 
 class Image(models.Model):
     image = models.ImageField(upload_to='images/', null=False, blank=False)
-    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="images")
+
+    class Meta:
+        abstract = True
+
+
+class PostImage(Image):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="post_image")
+
+
+class ChannelImage(Image):
+    channel = models.ForeignKey(Channel, on_delete=models.CASCADE, related_name="channel_image")
 
 
 class Like(models.Model):

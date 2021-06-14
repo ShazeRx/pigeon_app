@@ -1,7 +1,7 @@
 from collections import OrderedDict
 
 
-class PostSerializerUtils:
+class BlogSerializerUtils:
     @staticmethod
     def add_values_to_dict(dict: dict, **kwargs):
         data = OrderedDict()
