@@ -18,7 +18,7 @@ class ChannelSerializer(WritableNestedModelSerializer):
     owner = UserSerializer(many=False, read_only=True, allow_null=False)
     number_of_members = serializers.SerializerMethodField()
     number_of_posts = serializers.SerializerMethodField()
-    image = ChannelImageSerializer(many=False, read_only=True)
+    channel_image = ChannelImageSerializer(many=True, read_only=True)
 
     class Meta:
         model = Channel

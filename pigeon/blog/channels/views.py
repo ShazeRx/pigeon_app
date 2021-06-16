@@ -8,7 +8,7 @@ from rest_framework.status import *
 
 from pigeon.blog.channels.pagination import ChannelPagination
 from pigeon.blog.channels.serializers import ChannelSerializer
-from pigeon.models import Channel, ChannelImage, Image
+from pigeon.models import Channel, ChannelImage
 
 
 class ChannelViewSet(viewsets.ModelViewSet):
@@ -26,12 +26,14 @@ class ChannelViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=request.data, context={
             'request': request})
         serializer.is_valid(raise_exception=True)
-        serializer.save()
         images = request.FILES.getlist('image')
-        for image in images:
-            photo = ChannelImage.objects.create(image=image, channel=serializer.instance)
-            photo.save()
-        return Response(serializer.data)
+        if not len(images) > 1:
+            serializer.save()
+            for image in images:
+                photo = ChannelImage.objects.create(image=image, channel=serializer.instance)
+                photo.save()
+            return Response(serializer.data)
+        return Response(data={'message': 'Channel can have only one image'}, status=HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=True, methods=['post'])
     def authenticate(self, request, *args, **kwargs) -> Response:

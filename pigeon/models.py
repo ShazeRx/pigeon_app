@@ -52,7 +52,7 @@ class Image(models.Model):
 
 
 class PostImage(Image):
-    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="post_image")
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="post_images")
 
 
 class ChannelImage(Image):

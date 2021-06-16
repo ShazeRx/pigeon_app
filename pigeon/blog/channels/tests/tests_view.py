@@ -40,7 +40,7 @@ class TestChannelView(TestCase):
         # when
         response = self.client.post(self.channels_url, data=self.public_channel_data)
         # then
-        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.status_code, 200)
         self.assertEqual(Channel.objects.count(), 1)
 
     def test_should_retrieve_channel_list(self):
@@ -96,21 +96,21 @@ class TestChannelView(TestCase):
         # when
         response = self.client.post(self.channels_url, data=self.public_channel_data)
         # then
-        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['owner']['id'], self.user.id)
 
     def test_has_access_field_should_be_true_for_creator(self):
         # when
         response = self.client.post(self.channels_url, data=self.public_channel_data)
         # then
-        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['has_access'], True)
 
     def test_channel_access_should_contain_creator_id(self):
         # when
         response = self.client.post(self.channels_url, data=self.public_channel_data)
         # then
-        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.status_code, 200)
         self.assertEqual(Channel.objects.get().channel_access.get().id, 1)
 
     def test_should_add_user_to_channel_to_global_channel(self):

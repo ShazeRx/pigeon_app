@@ -13,7 +13,7 @@ class PostSerializer(serializers.ModelSerializer):
     author = UserSerializer(many=False, read_only=True)
     tags = serializers.SerializerMethodField()
     comments_count = serializers.SerializerMethodField()
-    images = PostImageSerializer(many=True, read_only=True)
+    post_images = PostImageSerializer(many=True, read_only=True)
     likes_count = serializers.SerializerMethodField()
     """
     class for serializing Post model
@@ -21,7 +21,7 @@ class PostSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        fields = ["id", "body", "title", "author", "channel", "images", "created_at", "tags", "comments_count",
+        fields = ["id", "body", "title", "author", "channel", "post_images", "created_at", "tags", "comments_count",
                   "likes_count"]
         read_only_fields = ('id', 'created_at')
 
@@ -123,7 +123,7 @@ class GlobalPostSerializer(PostSerializer):
 
     class Meta:
         model = Post
-        fields = ["id", "body", "title", "author", "images", "created_at", "tags", "comments_count", "likes_count"]
+        fields = ["id", "body", "title", "author", "post_images", "created_at", "tags", "comments_count", "likes_count"]
 
     def to_internal_value(self, data):
         """
