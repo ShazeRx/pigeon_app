@@ -6,9 +6,9 @@ from rest_framework.relations import PrimaryKeyRelatedField
 
 from pigeon.auth.serializers import UserSerializer
 from pigeon.blog.images.serializers import ChannelImageSerializer
-from pigeon.blog.utils.utils import BlogSerializerUtils
 from pigeon.blog.tags.serializers import ChannelTagSerializer
-from pigeon.models import Channel, Tag, Post
+from pigeon.blog.utils.utils import BlogSerializerUtils
+from pigeon.models import Channel, Tag, Post, ChannelImage
 
 
 class ChannelSerializer(WritableNestedModelSerializer):
@@ -101,6 +101,10 @@ class ChannelSerializer(WritableNestedModelSerializer):
                 existing_tag = tag
                 existing_tag.save()
             existing_tag.channel.add(channel.id)
+
+    def save_image(self, image, channel: Channel):
+        photo = ChannelImage.objects.create(image=image, channel=channel)
+        photo.save()
 
     def update(self, instance, validated_data):
         user = self.get_user_id_from_request()
