@@ -9,7 +9,7 @@ from rest_framework.status import *
 from pigeon.blog.channels.serializers import ChannelSerializer
 from pigeon.blog.posts.pagination import PostPagination
 from pigeon.blog.posts.serializers import PostSerializer, GlobalPostSerializer
-from pigeon.models import Post, Channel, Image, Like
+from pigeon.models import Post, Channel, Image, Like, PostImage
 
 
 class PostViewSet(viewsets.ModelViewSet):
@@ -56,7 +56,7 @@ class PostViewSet(viewsets.ModelViewSet):
         serializer.save()
         images = request.FILES.getlist('images')
         for image in images:
-            photo = Image.objects.create(image=image, post=serializer.instance)
+            photo = PostImage.objects.create(image=image, post=serializer.instance)
             photo.save()
         return Response(serializer.data)
 

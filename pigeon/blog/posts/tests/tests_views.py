@@ -7,10 +7,10 @@ from model_bakery import baker
 from rest_framework.reverse import reverse
 from rest_framework.test import APIClient, APIRequestFactory, APITestCase
 
-from pigeon.blog.images.serializers import ImageSerializer
+from pigeon.blog.images.serializers import  PostImageSerializer
 from pigeon.blog.posts.serializers import GlobalPostSerializer, PostSerializer
 from pigeon.blog.tags.serializers import PostTagSerializer
-from pigeon.models import Post, Image, Like
+from pigeon.models import Post, Image, Like, PostImage
 
 
 class TestPostView(APITestCase):
@@ -130,14 +130,14 @@ class TestPostView(APITestCase):
         post = baker.make('pigeon.Post')
         image_name = tempfile.NamedTemporaryFile(suffix=".jpg").name
         mock_url.return_value = image_name
-        image = baker.make('pigeon.Image', post=post, image=image_name)
-        image_serializer_data = ImageSerializer(image).data
+        image = baker.make('pigeon.PostImage', post=post, image=image_name)
+        image_serializer_data = PostImageSerializer(image).data
         # when
         url = reverse('posts-detail', args=[post.id])
         response = self.client.get(url)
         # then
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(Image.objects.get().image.url, image_serializer_data['image'])
+        self.assertEqual(PostImage.objects.get().image.url, image_serializer_data['image'])
 
     def test_should_link_tags_correctly(self):
         # given

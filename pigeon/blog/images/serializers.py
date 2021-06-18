@@ -1,14 +1,15 @@
 from rest_framework import serializers
 
-from pigeon.models import Image
+from pigeon.models import ChannelImage, PostImage
 
 
-class ImageSerializer(serializers.ModelSerializer):
+class ChannelImageSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Image
+        model = ChannelImage
         fields = "__all__"
 
-    def to_representation(self, instance):
-        response = super().to_representation(instance)
-        response.pop("post")
-        return response
+
+class PostImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PostImage
+        fields = "__all__"

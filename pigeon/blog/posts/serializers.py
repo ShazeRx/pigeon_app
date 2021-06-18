@@ -3,8 +3,8 @@ from rest_framework import serializers, status
 
 from pigeon.auth.serializers import UserSerializer
 from pigeon.blog.channels.serializers import ChannelSerializer
-from pigeon.blog.images.serializers import ImageSerializer
-from pigeon.blog.posts.utils import PostSerializerUtils
+from pigeon.blog.images.serializers import PostImageSerializer
+from pigeon.blog.utils.utils import BlogSerializerUtils
 from pigeon.blog.tags.serializers import PostTagSerializer
 from pigeon.models import Post, Channel, Tag, Comment, Like
 
@@ -13,7 +13,7 @@ class PostSerializer(serializers.ModelSerializer):
     author = UserSerializer(many=False, read_only=True)
     tags = serializers.SerializerMethodField()
     comments_count = serializers.SerializerMethodField()
-    images = ImageSerializer(many=True, read_only=True)
+    post_images = PostImageSerializer(many=True, read_only=True)
     likes_count = serializers.SerializerMethodField()
     """
     class for serializing Post model
@@ -21,7 +21,7 @@ class PostSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        fields = ["id", "body", "title", "author", "channel", "images", "created_at", "tags", "comments_count",
+        fields = ["id", "body", "title", "author", "channel", "post_images", "created_at", "tags", "comments_count",
                   "likes_count"]
         read_only_fields = ('id', 'created_at')
 
@@ -53,9 +53,10 @@ class PostSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         post = super(PostSerializer, self).create(validated_data)
-        tag_list_data = self.context['request'].data['tags']
-        tags = [Tag(**tag_data) for tag_data in tag_list_data]
-        self.link_tags(post, tags)
+        if 'tags' in self.context['request'].data:
+            tag_list_data = self.context['request'].data['tags']
+            tags = [Tag(**tag_data) for tag_data in tag_list_data]
+            self.link_tags(post, tags)
         return post
 
     def get_tags(self, post: Post):
@@ -122,14 +123,14 @@ class GlobalPostSerializer(PostSerializer):
 
     class Meta:
         model = Post
-        fields = ["id", "body", "title", "author", "images", "created_at", "tags", "comments_count", "likes_count"]
+        fields = ["id", "body", "title", "author", "post_images", "created_at", "tags", "comments_count", "likes_count"]
 
     def to_internal_value(self, data):
         """
         Method for translating author id from request to nested serializer user object
         """
         user_id = self.context['request'].user.id
-        modified_data = PostSerializerUtils.add_values_to_dict(data, author=user_id)
+        modified_data = BlogSerializerUtils.add_values_to_dict(data, author=user_id)
         self.fields['author'] = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
         return super(PostSerializer, self).to_internal_value(modified_data)
 

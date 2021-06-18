@@ -22,6 +22,18 @@ class ChannelViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return Channel.objects.all().order_by('id')
 
+    def create(self, request: Request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data, context={
+            'request': request})
+        serializer.is_valid(raise_exception=True)
+        images = request.FILES.getlist('image')
+        if not len(images) > 1:
+            serializer.save()
+            for image in images:
+                serializer.save_image(image, serializer.instance)
+            return Response(serializer.data)
+        return Response(data={'message': 'Channel can have only one image'}, status=HTTP_500_INTERNAL_SERVER_ERROR)
+
     @action(detail=True, methods=['post'])
     def authenticate(self, request, *args, **kwargs) -> Response:
         """
