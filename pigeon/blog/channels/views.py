@@ -96,6 +96,15 @@ class ChannelViewSet(viewsets.ModelViewSet):
         Generate random password for channel
         """
         channel = Channel.objects.get(id=kwargs['pk'])
-        channel.password = BlogSerializerUtils.randomize_password(Channel.objects.all())
-        channel.save()
-        return Response(data={'password': channel.password})
+        if channel.owner is self.request.user:
+            channel.password = BlogSerializerUtils.randomize_password(Channel.objects.all())
+            channel.save()
+            return Response(data={'password': channel.password})
+        return Response(data={'message': 'Unauthorized'}, status=HTTP_401_UNAUTHORIZED)
+
+    @action(detail=True, methods=['get'])
+    def get_password(self, request, *args, **kwargs):
+        channel = Channel.objects.get(id=kwargs['pk'])
+        if channel.owner is self.request.user:
+            return Response(data={'password': channel.password})
+        return Response(data={'message': 'Unauthorized'}, status=HTTP_401_UNAUTHORIZED)
