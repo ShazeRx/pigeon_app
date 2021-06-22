@@ -23,12 +23,12 @@ class CommentViewSet(viewsets.ModelViewSet):
         """
         return Comment.objects.filter(post=self.kwargs['post_pk']).order_by('created_at')
 
-    def get_serializer_context(self):
+    def get_serializer_context(self) -> CommentSerializer:
         context = super(CommentViewSet, self).get_serializer_context()
         context.update({'post_id': self.kwargs['post_pk']})
         return context
 
-    def destroy(self, request, *args, **kwargs):
+    def destroy(self, request, *args, **kwargs) -> Response:
         comment = Comment.objects.get(id=kwargs.get('pk'))
         serializer = self.get_serializer(comment)
         serializer.remove()

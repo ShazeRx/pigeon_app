@@ -39,6 +39,10 @@ class CommentSerializer(serializers.ModelSerializer):
         return response
 
     def remove(self):
+        """
+        Remove comment by only author of user, instead throw 403
+        :return:
+        """
         user = self.context['request'].user
         comment = self.instance
         if user == comment.user:
@@ -46,6 +50,9 @@ class CommentSerializer(serializers.ModelSerializer):
         raise ValidationError(detail={'message': f'User {user} not author of comment'})
 
     def update(self, instance, validated_data):
+        """
+        Update comment by author only, instead throw 403
+        """
         user = self.context['request'].user
         comment = self.instance
         if user == comment.user:

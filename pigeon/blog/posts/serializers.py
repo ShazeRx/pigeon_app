@@ -4,8 +4,8 @@ from rest_framework import serializers, status
 from pigeon.auth.serializers import UserSerializer
 from pigeon.blog.channels.serializers import ChannelSerializer
 from pigeon.blog.images.serializers import PostImageSerializer
-from pigeon.blog.utils.utils import BlogSerializerUtils
 from pigeon.blog.tags.serializers import PostTagSerializer
+from pigeon.blog.utils.utils import BlogSerializerUtils
 from pigeon.models import Post, Channel, Tag, Comment, Like
 
 
@@ -60,17 +60,21 @@ class PostSerializer(serializers.ModelSerializer):
         return post
 
     def get_tags(self, post: Post):
+        """Get tags assigned to post"""
         tags = Tag.objects.filter(post=post.id)
         serializer = PostTagSerializer(tags, many=True)
         return serializer.data
 
     def get_comments_count(self, post: Post):
+        """Get number of comments added to post"""
         return Comment.objects.filter(post=post.id).count()
 
     def get_likes_count(self, post: Post):
+        """Get number of likes added to post"""
         return Like.objects.filter(post=post.id).count()
 
     def validate(self, attrs):
+        """Validate if user from token is part of channel and is owner instead throw 403"""
         author = attrs['author']
         channel = attrs.get('channel')
         request_user = self.get_user_from_request()
@@ -79,6 +83,7 @@ class PostSerializer(serializers.ModelSerializer):
         return attrs
 
     def remove(self):
+        """Remove post if user is author of post, has access to channel or is owner of channel, instead throw 403"""
         user = self.context['request'].user
         post = self.instance
         post_channel = post.channel
@@ -89,6 +94,11 @@ class PostSerializer(serializers.ModelSerializer):
         raise serializers.ValidationError(detail=f'User {user} not part of channel with id {post_channel.id}')
 
     def update(self, instance, validated_data):
+        """
+        Update post if user is author of post, has access to channel or is owner of channel, instead throw 403
+        If tags in request body dont matches existing ones in post, then tags from post that dont match tags from
+        request will be deleted
+        """
         user = self.context['request'].user
         post_channel = instance.channel
         if user == instance.author \
@@ -106,6 +116,10 @@ class PostSerializer(serializers.ModelSerializer):
         raise serializers.ValidationError(detail=f'User {user} not part of channel with id {post_channel.id}')
 
     def link_tags(self, post: Post, tags_to_be_added: list):
+        """
+        Link tags to channel
+        :param tags_to_be_added: tags to be added to channel
+        """
         # get all tags which have same names as in request
         existing_tags = Tag.objects.filter(name__in=[tag.name for tag in tags_to_be_added])
         for tag in tags_to_be_added:
@@ -139,6 +153,7 @@ class GlobalPostSerializer(PostSerializer):
         return super(PostSerializer, self).to_representation(instance)
 
     def remove(self):
+        """Remove post if user is author of post, instead throw 403"""
         user = self.context['request'].user
         post = self.instance
         if user == post.author:
@@ -147,6 +162,12 @@ class GlobalPostSerializer(PostSerializer):
                                           code=status.HTTP_401_UNAUTHORIZED)
 
     def update(self, instance: Post, validated_data):
+        """
+        Update post if user is author of post, instead throw 403
+        If tags in request body dont matches existing ones in post, then tags from post that dont match tags from
+        request will be deleted
+        """
+
         user = self.context['request'].user
         if user == instance.author:
             tag_list_data = self.context['request'].data['tags']

@@ -1,4 +1,3 @@
-from django.contrib.auth.models import User
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -8,6 +7,7 @@ from rest_framework.status import *
 
 from pigeon.blog.channels.pagination import ChannelPagination
 from pigeon.blog.channels.serializers import ChannelSerializer
+from pigeon.blog.utils.utils import BlogSerializerUtils
 from pigeon.models import Channel
 
 
@@ -20,9 +20,12 @@ class ChannelViewSet(viewsets.ModelViewSet):
     pagination_class = ChannelPagination
 
     def get_queryset(self):
-        return Channel.objects.all().order_by('id')
+        return Channel.objects.filter(is_private=False).order_by('id')
 
     def create(self, request: Request, *args, **kwargs):
+        """
+        Create channel
+        """
         serializer = self.get_serializer(data=request.data, context={
             'request': request})
         serializer.is_valid(raise_exception=True)
@@ -34,19 +37,16 @@ class ChannelViewSet(viewsets.ModelViewSet):
             return Response(serializer.data)
         return Response(data={'message': 'Channel can have only one image'}, status=HTTP_500_INTERNAL_SERVER_ERROR)
 
-    @action(detail=True, methods=['post'])
+    @action(detail=False, methods=['post'])
     def authenticate(self, request, *args, **kwargs) -> Response:
         """
         Add user to channel, if channel isPrivate parameter is True then
         password query parameter need to be added to request with valid password
         :return:
         """
-        channel_pk = kwargs.get('pk', '')
-        serializer = ChannelSerializer()
-        channel = serializer.get_channel_by_id(channel_pk)
         password = request.query_params.get('password', '')
-        is_valid_password = channel.password is None if password == '' else password
-        if is_valid_password or not channel.is_private:
+        channel = Channel.objects.filter(is_private=True, password=password).first()
+        if channel:
             channel.channel_access.add(request.user)
             channel.save()
             return Response(data={'message': 'Authenticated'})
@@ -64,7 +64,21 @@ class ChannelViewSet(viewsets.ModelViewSet):
         channel.save()
         return Response(data={'message': 'Removed'})
 
+    @action(detail=False, methods=['get'])
+    def has_access(self, request, *args, **kwargs):
+        queryset = Channel.objects.filter(channel_access__in=[self.request.user]).order_by('id')
+        page = self.paginate_queryset(queryset)
+        serializer = self.get_serializer(page, many=True,
+                                         context={
+                                             'request': request})
+        if page is not None:
+            return self.get_paginated_response(serializer.data)
+        return Response(serializer.data)
+
     def retrieve(self, request: Request, *args, **kwargs) -> Response:
+        """
+        Retrieve channel by id
+        """
         id = kwargs.get('pk')
         try:
             channel = Channel.objects.get(id=id)
@@ -82,6 +96,6 @@ class ChannelViewSet(viewsets.ModelViewSet):
         Generate random password for channel
         """
         channel = Channel.objects.get(id=kwargs['pk'])
-        channel.password = User.objects.make_random_password(16)
+        channel.password = BlogSerializerUtils.randomize_password(Channel.objects.all())
         channel.save()
         return Response(data={'password': channel.password})

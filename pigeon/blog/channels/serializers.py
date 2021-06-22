@@ -86,7 +86,8 @@ class ChannelSerializer(WritableNestedModelSerializer):
         channel = Channel(**validated_data)
         channel.save()
         channel.channel_access.add(user_id)
-        channel.password = User.objects.make_random_password()
+        channel.password = BlogSerializerUtils.randomize_password(Channel.objects.all())
+        channel.save()
         if 'tags' in self.context['request'].data:
             tag_list_data = self.context['request'].data['tags']
             tags = [Tag(**tag_data) for tag_data in tag_list_data]
@@ -94,6 +95,12 @@ class ChannelSerializer(WritableNestedModelSerializer):
         return channel
 
     def link_tags(self, channel: Channel, tags_to_be_added: list):
+        """
+        Link tags to channel
+        :param channel: channel
+        :param tags_to_be_added: tags wanted to be added to channel
+        :return:
+        """
         existing_tags = Tag.objects.filter(name__in=[tag.name for tag in tags_to_be_added])
         for tag in tags_to_be_added:
             existing_tag = existing_tags.filter(name=tag.name).first()
@@ -103,10 +110,22 @@ class ChannelSerializer(WritableNestedModelSerializer):
             existing_tag.channel.add(channel.id)
 
     def save_image(self, image, channel: Channel):
+        """
+        Save image to cloudinary
+        :param image: image object
+        :param channel: channel
+        :return:
+        """
         photo = ChannelImage.objects.create(image=image, channel=channel)
         photo.save()
 
     def update(self, instance, validated_data):
+        """
+        Update channel
+        :param instance:
+        :param validated_data:
+        :return:
+        """
         user = self.get_user_id_from_request()
         if instance.owner is not None:
             if user == instance.owner.id:
