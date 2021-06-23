@@ -9,7 +9,7 @@ from rest_framework.status import *
 from pigeon.blog.channels.serializers import ChannelSerializer
 from pigeon.blog.posts.pagination import PostPagination
 from pigeon.blog.posts.serializers import PostSerializer, GlobalPostSerializer
-from pigeon.models import Post, Channel, Image, Like, PostImage
+from pigeon.models import Post, Channel, Like, PostImage
 
 
 class PostViewSet(viewsets.ModelViewSet):
@@ -77,3 +77,15 @@ class PostViewSet(viewsets.ModelViewSet):
             return Response(status=HTTP_200_OK)
         like.delete()
         return Response(status=HTTP_204_NO_CONTENT)
+
+    @action(detail=False, methods=['get'])
+    def get_watched_posts(self, request: Request, *args, **kwargs):
+        """
+        Get all posts liked by user
+        """
+        posts = Post.objects.filter(like__user=request.user)
+        page = self.paginate_queryset(posts)
+        serializer = self.get_serializer(page, many=True,
+                                         context={
+                                             'request': request})
+        return Response(serializer.data)
